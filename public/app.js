@@ -5,17 +5,17 @@ const geofenceRadius = 150;
 const defaultShifts = { pagi: { label: 'Pagi', start: '07:00', end: '15:00' }, siang: { label: 'Siang', start: '11:00', end: '19:00' }, midle: { label: 'Malam', start: '15:00', end: '23:00' } };
 let shifts = JSON.parse(localStorage.getItem('padel-shifts') || 'null') || defaultShifts;
 shifts = Object.fromEntries(Object.entries(defaultShifts).map(([key, defaultShift]) => [key, { ...defaultShift, ...(shifts[key] || {}) }]));
-if (shifts.midle.label === 'Midle' || shifts.midle.label === 'Sore') shifts.midle.label = 'Malam';
+if (shifts.midle.label === 'Middle' || shifts.midle.label === 'Sore') shifts.midle.label = 'Malam';
 let weeklyOffDay = Number(localStorage.getItem('padel-weekly-off-day') ?? 0);
 let clubLocations = JSON.parse(localStorage.getItem('padel-club-locations') || 'null') || [];
 const legacyLocation = JSON.parse(localStorage.getItem('padel-club-location') || 'null');
 if (!clubLocations.length && legacyLocation) clubLocations = [legacyLocation];
 clubLocations = clubLocations.map((location, index) => ({ ...location, name: location.name || `Lokasi ${index + 1}`, radius: Number(location.radius) || geofenceRadius }));
 const employees = [
-  { id: 1, employeeId: 'PDL-0001', name: 'Raka Pratama', phone: '081234560001', role: 'Club Manager', shift: 'pagi', fixedSalary: 8500000, weekendAllowance: 25000, mealTransportAllowance: 10000, attendanceBonus: 300000, overtimeRate: 10000, overtimeHours: 4, otherAdjustment: -250000 },
-  { id: 2, employeeId: 'PDL-0002', name: 'Nadia Sari', phone: '081234560002', role: 'Front Desk', shift: 'siang', fixedSalary: 5500000, weekendAllowance: 25000, mealTransportAllowance: 10000, attendanceBonus: 300000, overtimeRate: 10000, overtimeHours: 2, otherAdjustment: -100000 },
-  { id: 3, employeeId: 'PDL-0003', name: 'Fajar Hidayat', phone: '081234560003', role: 'Coach', shift: 'pagi', fixedSalary: 6500000, weekendAllowance: 25000, mealTransportAllowance: 10000, attendanceBonus: 300000, overtimeRate: 10000, overtimeHours: 6, otherAdjustment: 0 },
-  { id: 4, employeeId: 'PDL-0004', name: 'Citra Lestari', phone: '081234560004', role: 'Front Desk', shift: 'midle', fixedSalary: 5500000, weekendAllowance: 25000, mealTransportAllowance: 10000, attendanceBonus: 300000, overtimeRate: 10000, overtimeHours: 0, otherAdjustment: -150000 }
+  { id: 1, employeeId: 'PDL-0001', name: 'Nazwa Verlita', phone: '081234560001', role: 'Club Manager', shift: 'pagi', fixedSalary: 8500000, weekendAllowance: 25000, mealTransportAllowance: 10000, attendanceBonus: 300000, overtimeRate: 10000, overtimeHours: 4, otherAdjustment: -250000 },
+  { id: 2, employeeId: 'PDL-0002', name: 'Selvi Nuraeni', phone: '081234560002', role: 'Front Desk', shift: 'siang', fixedSalary: 5500000, weekendAllowance: 25000, mealTransportAllowance: 10000, attendanceBonus: 300000, overtimeRate: 10000, overtimeHours: 2, otherAdjustment: -100000 },
+  { id: 3, employeeId: 'PDL-0003', name: 'Mia Haryati', phone: '081234560003', role: 'Coach', shift: 'pagi', fixedSalary: 6500000, weekendAllowance: 25000, mealTransportAllowance: 10000, attendanceBonus: 300000, overtimeRate: 10000, overtimeHours: 6, otherAdjustment: 0 },
+  { id: 4, employeeId: 'PDL-0004', name: 'Dewi', phone: '081234560004', role: 'Front Desk', shift: 'midle', fixedSalary: 5500000, weekendAllowance: 25000, mealTransportAllowance: 10000, attendanceBonus: 300000, overtimeRate: 1<PASSWORD>, overtimeHours: <PASSWORD>, otherAdjustment: -15<PASSWORD> }
 ];
 const seedMembers = [
   { id: 1, name: 'Nazwa Verlita', phone: '081234567890', plan: 'Annual', expires: '2026-09-12', visits: 24 },
@@ -182,3 +182,125 @@ render();
 initializeAttendanceReport();
 if (new URLSearchParams(window.location.search).get('mode') === 'employee') { document.body.classList.add('employee-mode'); showView('mobile'); }
 if (new URLSearchParams(window.location.search).get('mode') === 'employee') initializeMobileAuth();
+const API_URL = '/api';
+const ADMIN_PIN = "1234"; // Ubah PIN ini sesuai kebutuhan Anda
+
+// --- LOGIKA TAMPILAN & AKSEIBILITAS ---
+function bukaModalLogin() {
+    document.getElementById('modalLogin').classList.remove('hidden');
+    document.getElementById('pinInput').focus();
+}
+
+function tutupModalLogin() {
+    document.getElementById('modalLogin').classList.add('hidden');
+    document.getElementById('pinInput').value = '';
+}
+
+function verifikasiPin() {
+    const pin = document.getElementById('pinInput').value;
+    if (pin === ADMIN_PIN) {
+        // Tampilkan Mode Admin / Launching
+        document.getElementById('sectionMembership').classList.remove('hidden');
+        document.getElementById('btnLogout').classList.remove('hidden');
+        document.getElementById('userStatusText').innerText = 'Mode: Full Launching (Admin)';
+        tutupModalLogin();
+        loadMembers(); // Fetch data member hanya saat admin masuk
+    } else {
+        alert('PIN Salah!');
+    }
+}
+
+function logoutAdmin() {
+    // Sembunyikan kembali section membership
+    document.getElementById('sectionMembership').classList.add('hidden');
+    document.getElementById('btnLogout').classList.add('hidden');
+    document.getElementById('userStatusText').innerText = 'Mode: Absensi Karyawan';
+}
+
+// --- KARYAWAN & ABSENSI ---
+async function loadKaryawan() {
+    const res = await fetch(`${API_URL}/karyawan`);
+    const data = await res.json();
+    const container = document.getElementById('listKaryawan');
+    container.innerHTML = '';
+
+    data.forEach(k => {
+        container.innerHTML += `
+            <div class="flex justify-between items-center bg-slate-50 p-3 rounded border">
+                <div>
+                    <p class="font-bold text-slate-800">${k.nama}</p>
+                    <p class="text-sm text-slate-500">${k.jabatan}</p>
+                </div>
+                <div class="space-x-1">
+                    <button onclick="absen(${k.id}, 'Hadir')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded text-sm">Hadir</button>
+                    <button onclick="absen(${k.id}, 'Izin')" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded text-sm">Izin</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+async function tambahKaryawan() {
+    const nama = document.getElementById('namaKaryawan').value;
+    const jabatan = document.getElementById('jabatanKaryawan').value;
+    if (!nama || !jabatan) return alert('Lengkapi data karyawan');
+
+    await fetch(`${API_URL}/karyawan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nama, jabatan })
+    });
+
+    document.getElementById('namaKaryawan').value = '';
+    document.getElementById('jabatanKaryawan').value = '';
+    loadKaryawan();
+}
+
+async function absen(karyawan_id, status) {
+    await fetch(`${API_URL}/absensi`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ karyawan_id, status })
+    });
+    alert(`Absensi (${status}) berhasil dicatat!`);
+}
+
+// --- MEMBERSHIP PADEL ---
+async function loadMembers() {
+    const res = await fetch(`${API_URL}/members`);
+    const data = await res.json();
+    const container = document.getElementById('listMember');
+    container.innerHTML = '';
+
+    data.forEach(m => {
+        container.innerHTML += `
+            <div class="flex justify-between items-center bg-slate-50 p-3 rounded border">
+                <div>
+                    <p class="font-bold text-slate-800">${m.nama} <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-1">${m.paket}</span></p>
+                    <p class="text-sm text-slate-500">${m.telepon}</p>
+                </div>
+                <span class="text-xs font-semibold px-2 py-1 bg-emerald-100 text-emerald-700 rounded">${m.status}</span>
+            </div>
+        `;
+    });
+}
+
+async function tambahMember() {
+    const nama = document.getElementById('namaMember').value;
+    const telepon = document.getElementById('teleponMember').value;
+    const paket = document.getElementById('paketMember').value;
+    if (!nama || !telepon) return alert('Lengkapi data member');
+
+    await fetch(`${API_URL}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nama, telepon, paket })
+    });
+
+    document.getElementById('namaMember').value = '';
+    document.getElementById('teleponMember').value = '';
+    loadMembers();
+}
+
+// Inisialisasi awal hanya memuat Absensi Karyawan
+loadKaryawan();
