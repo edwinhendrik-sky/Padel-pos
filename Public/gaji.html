@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rincian Gaji & Tunjangan Karyawan - Padel Club</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    
+    .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .user-info { font-weight: 600; color: #495057; font-size: 14px; }
+    .btn-action { text-decoration: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; color: white; display: inline-block; border: none; cursor: pointer; }
+    .btn-admin { background-color: #007bff; }
+    .btn-rekening { background-color: #17a2b8; }
+    .btn-logout { background-color: #dc3545; }
+
+    .card { background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 25px; }
+    h2, h3, h4 { margin-top: 0; color: #1a252f; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+    @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+    
+    .form-group { margin-bottom: 12px; }
+    label { font-weight: 600; display: block; margin-bottom: 5px; font-size: 13px; color: #495057; }
+    input, select { width: 100%; padding: 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; }
+    
+    .btn-save { background-color: #28a745; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; font-size: 15px; margin-top: 10px; }
+    .btn-save:hover { background-color: #218838; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 12px 12px; text-align: left; border-bottom: 1px solid #eeeeee; font-size: 12px; vertical-align: middle; }
+    th { background-color: #28a745; color: white; font-weight: 600; }
+    tr:hover { background-color: #f8f9fa; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div class="nav-bar">
+    <div>
+      <h2 style="margin:0;">Kelola Komponen Gaji Karyawan</h2>
+      <div class="user-info" id="labelWelcome">Memuat data admin...</div>
+    </div>
+    <div>
+      <a href="/admin.html" class="btn-action btn-admin">← Dashboard Admin</a>
+      <a href="/rekening.html" class="btn-action btn-rekening">Data Rekening →</a>
+      <button onclick="logout()" class="btn-action btn-logout">Logout</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Input / Update Komponen Rincian Gaji</h3>
+    <form id="formGaji">
+      <div class="form-group" style="max-width: 400px; margin-bottom: 20px;">
+        <label for="selectKaryawan">Pilih Karyawan:</label>
+        <select id="selectKaryawan" onchange="autofillGaji()" required>
+          <option value="">-- Pilih Karyawan --</option>
+        </select>
+      </div>
+
+      <h4 style="color: #007bff; border-bottom: 1px solid #eee; padding-bottom: 5px;">1. Gaji & Tunjangan Utama</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="gajiPokok">Gaji Pokok (Rp):</label>
+          <input type="number" id="gajiPokok" value="0">
+        </div>
+        <div class="form-group">
+          <label for="tunjanganWeekend">Tunjangan Weekend (Rp):</label>
+          <input type="number" id="tunjanganWeekend" value="0">
+        </div>
+        <div class="form-group">
+          <label for="tunjanganMakanTransport">Tunjangan Makan/Transport (Rp):</label>
+          <input type="number" id="tunjanganMakanTransport" value="0">
+        </div>
+      </div>
+
+      <h4 style="color: #28a745; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 10px;">2. Bonus & Tambahan Lainnya</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="bonusKehadiran">Bonus Kehadiran (Rp):</label>
+          <input type="number" id="bonusKehadiran" value="0">
+        </div>
+        <div class="form-group">
+          <label for="tambahanLain">Tambahan Lain-Lain (Rp):</label>
+          <input type="number" id="tambahanLain" value="0">
+        </div>
+      </div>
+
+      <h4 style="color: #dc3545; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 10px;">3. Potongan</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="potonganLain">Potongan Lain-Lain (Rp):</label>
+          <input type="number" id="potonganLain" value="0">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-save">Simpan Data Komponen Gaji</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Report Rincian Gaji Karyawan</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Karyawan</th>
+          <th>Gaji Pokok</th>
+          <th>Tnj. Weekend</th>
+          <th>Makan & Transport</th>
+          <th>Bonus Kehadiran</th>
+          <th>Tambahan Lain</th>
+          <th>Potongan</th>
+          <th>THP (Total Gaji)</th>
+        </tr>
+      </thead>
+      <tbody id="tabelGaji">
+        <tr><td colspan="8" style="text-align: center;">Memuat data...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  let cacheKaryawan = [];
+
+  function cekAksesAdmin() {
+    const userSession = localStorage.getItem('user_padel');
+    if (!userSession) { window.location.href = '/login.html'; return; }
+
+    const user = JSON.parse(userSession);
+    if (user.role !== 'admin') {
+      alert('Akses Ditolak!');
+      window.location.href = '/';
+      return;
+    }
+    document.getElementById('labelWelcome').textContent = `Admin: ${user.nama} (${user.id_karyawan})`;
+  }
+
+  async function loadDataGaji() {
+    try {
+      const res = await fetch('/api/gaji-lengkap');
+      cacheKaryawan = await res.json();
+      
+      const select = document.getElementById('selectKaryawan');
+      const tbody = document.getElementById('tabelGaji');
+      
+      select.innerHTML = '<option value="">-- Pilih Karyawan --</option>';
+      tbody.innerHTML = '';
+
+      if (cacheKaryawan.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Belum ada data.</td></tr>';
+        return;
+      }
+
+      cacheKaryawan.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id_karyawan;
+        opt.textContent = `${item.id_karyawan} - ${item.nama}`;
+        select.appendChild(opt);
+
+        const gajipok = item.gaji_pokok ? `Rp ${item.gaji_pokok.toLocaleString('id-ID')}` : 'Rp 0';
+        const tWeekend = item.tunjangan_weekend ? `Rp ${item.tunjangan_weekend.toLocaleString('id-ID')}` : 'Rp 0';
+        const tMakan = item.tunjangan_makan_transport ? `Rp ${item.tunjangan_makan_transport.toLocaleString('id-ID')}` : 'Rp 0';
+        const bHadir = item.bonus_kehadiran ? `Rp ${item.bonus_kehadiran.toLocaleString('id-ID')}` : 'Rp 0';
+        const tLain = item.tambahan_lain ? `Rp ${item.tambahan_lain.toLocaleString('id-ID')}` : 'Rp 0';
+        const pot = item.potongan_lain ? `Rp ${item.potongan_lain.toLocaleString('id-ID')}` : 'Rp 0';
+        
+        // Kalkulasi Total Take Home Pay (THP)
+        const totalTHP = (item.gaji_pokok || 0) + (item.tunjangan_weekend || 0) + (item.tunjangan_makan_transport || 0) + (item.bonus_kehadiran || 0) + (item.tambahan_lain || 0) - (item.potongan_lain || 0);
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${item.nama}</b><br><small style="color:#666;">ID: ${item.id_karyawan}</small></td>
+          <td>${gajipok}</td>
+          <td>${tWeekend}</td>
+          <td>${tMakan}</td>
+          <td>${bHadir}</td>
+          <td>${tLain}</td>
+          <td style="color:#dc3545;">-${pot}</td>
+          <td><b style="color:#28a745;">Rp ${totalTHP.toLocaleString('id-ID')}</b></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) { console.error(err); }
+  }
+
+  function autofillGaji() {
+    const idSel = document.getElementById('selectKaryawan').value;
+    const target = cacheKaryawan.find(k => k.id_karyawan === idSel);
+
+    if (target) {
+      document.getElementById('gajiPokok').value = target.gaji_pokok || 0;
+      document.getElementById('tunjanganWeekend').value = target.tunjangan_weekend || 0;
+      document.getElementById('tunjanganMakanTransport').value = target.tunjangan_makan_transport || 0;
+      document.getElementById('bonusKehadiran').value = target.bonus_kehadiran || 0;
+      document.getElementById('tambahanLain').value = target.tambahan_lain || 0;
+      document.getElementById('potonganLain').value = target.potongan_lain || 0;
+    } else {
+      document.getElementById('formGaji').reset();
+    }
+  }
+
+  document.getElementById('formGaji').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id_karyawan = document.getElementById('selectKaryawan').value;
+    const gaji_pokok = parseFloat(document.getElementById('gajiPokok').value) || 0;
+    const tunjangan_weekend = parseFloat(document.getElementById('tunjanganWeekend').value) || 0;
+    const tunjangan_makan_transport = parseFloat(document.getElementById('tunjanganMakanTransport').value) || 0;
+    const bonus_kehadiran = parseFloat(document.getElementById('bonusKehadiran').value) || 0;
+    const tambahan_lain = parseFloat(document.getElementById('tambahanLain').value) || 0;
+    const potongan_lain = parseFloat(document.getElementById('potonganLain').value) || 0;
+
+    try {
+      const res = await fetch('/api/gaji-rekening', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id_karyawan, 
+          gaji_pokok, 
+          tunjangan_weekend, 
+          tunjangan_makan_transport, 
+          bonus_kehadiran, 
+          tambahan_lain, 
+          potongan_lain 
+        })
+      });
+
+      if (res.ok) {
+        alert('Komponen gaji berhasil disimpan!');
+        document.getElementById('formGaji').reset();
+        loadDataGaji();
+      } else {
+        alert('Gagal menyimpan rincian gaji!');
+      }
+    } catch (err) { alert('Terjadi kesalahan koneksi!'); }
+  });
+
+  function logout() {
+    if (confirm("Logout?")) {
+      localStorage.clear();
+      window.location.href = '/login.html';
+    }
+  }
+
+  window.onload = () => {
+    cekAksesAdmin();
+    loadDataGaji();
+  };
+</script>
+
+</body>
+</html>
