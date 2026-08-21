@@ -1,7 +1,0 @@
-{
-	"name": "padel-pos",
-	"version": "1.0.0",
-	"description": "Dashboard absensi karyawan dan membership customer padel",
-	"private": true,
-	"scripts": { "start": "node server.js" }
-}
