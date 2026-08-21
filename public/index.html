@@ -3,76 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Padel Club POS & Absensi</title>
+    <title>Padel Club Operations & Absensi</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .view { display: none; }
+        .active-view { display: block; }
+        .modal-backdrop { display: none; }
+        .modal-backdrop.open { display: flex; }
+        body.employee-mode .admin-only { display: none !important; }
+    </style>
 </head>
-<body class="bg-slate-100 p-8 font-sans">
-    <div class="max-w-4xl mx-auto space-y-8">
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+
+    <!-- CONTAINER UTAMA LOGIN/VIEW KARYAWAN MOBILE -->
+    <div id="mobileView" class="view active-view max-w-md mx-auto p-4 space-y-6">
         
-        <!-- HEADER UTAMA -->
-        <div class="flex justify-between items-center bg-slate-900 text-white p-6 rounded-xl shadow-lg">
-            <div>
-                <h1 class="text-2xl font-bold">Padel Club Operations</h1>
-                <p class="text-sm text-slate-400" id="userStatusText">Mode: Absensi Karyawan</p>
-            </div>
-            <!-- Tombol Switch Mode Admin (Akan Muncul Setelah Login) -->
-            <button id="btnLogout" onclick="logoutAdmin()" class="hidden bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded text-sm font-semibold">
-                Exit Admin Mode
-            </button>
+        <!-- HEADER -->
+        <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 text-center">
+            <h1 class="text-2xl font-bold text-emerald-400">Padel Club Presensi</h1>
+            <p id="mobileDate" class="text-xs text-slate-400 mt-1">Memuat tanggal...</p>
         </div>
 
-        <!-- 1. TAMPILAN AWAL: PRESENSI KARYAWAN ONLY -->
-        <div id="sectionKaryawan" class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
-            <h2 class="text-xl font-bold mb-4 text-emerald-600">Presensi Karyawan</h2>
-            
-            <div class="mb-6 flex gap-2">
-                <input id="namaKaryawan" type="text" placeholder="Nama Karyawan" class="border p-2 rounded w-full">
-                <input id="jabatanKaryawan" type="text" placeholder="Jabatan" class="border p-2 rounded w-full">
-                <button onclick="tambahKaryawan()" class="bg-emerald-600 text-white px-4 py-2 rounded font-semibold hover:bg-emerald-700">Tambah</button>
+        <!-- FORM LOGIN KARYAWAN (Jika belum login) -->
+        <div id="mobileLogin" class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+            <h2 class="text-lg font-semibold text-slate-200">Login Karyawan</h2>
+            <form id="mobileLoginForm" class="space-y-3">
+                <div>
+                    <label class="text-xs text-slate-400">ID Karyawan</label>
+                    <input name="employeeId" type="text" placeholder="Contoh: PDL-0001" required class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white mt-1 uppercase">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400">PIN</label>
+                    <input name="pin" type="password" inputmode="numeric" placeholder="****" required class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white mt-1 tracking-widest text-center">
+                </div>
+                <p id="mobileLoginMessage" class="text-xs text-rose-400 font-semibold"></p>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-emerald-900/40">Masuk Aplikasi</button>
+            </form>
+        </div>
+
+        <!-- CARD CLOCK IN / OUT (Muncul setelah login) -->
+        <div id="mobileDashboard" class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-700">
+                <div>
+                    <h3 id="mobileEmployeeName" class="text-xl font-bold text-white">Halo!</h3>
+                    <p id="mobileAttendanceStatus" class="text-xs text-emerald-400">Status Presensi</p>
+                </div>
+                <button id="mobileLogout" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-slate-300">Keluar</button>
             </div>
 
-            <h3 class="font-semibold text-slate-700 mb-2">Presensi Hari Ini</h3>
-            <div id="listKaryawan" class="space-y-2"></div>
+            <div class="text-center py-2">
+                <p id="mobileAttendanceTime" class="text-2xl font-mono font-bold text-slate-200">--:--</p>
+                <p id="mobileLocationInfo" class="text-[10px] text-slate-400 mt-1">Memeriksa GPS...</p>
+            </div>
 
-            <!-- PIN Trigger Akses Admin -->
-            <div class="mt-8 pt-6 border-t border-slate-100 flex justify-end">
-                <button onclick="bukaModalLogin()" class="text-xs text-slate-400 hover:text-slate-600 underline">
-                    Akses Fitur Management / Launching Mode
+            <!-- OPSI MASUK PENGGANTI -->
+            <label class="flex items-center gap-2 text-xs text-slate-300 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50 cursor-pointer">
+                <input type="checkbox" id="mobileReplacement" class="rounded accent-emerald-500">
+                <span>Masuk sebagai pengganti (Hari Libur)</span>
+            </label>
+
+            <!-- TOMBOL CLOCK IN & OUT -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button id="mobileClockIn" data-clock="in" class="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold disabled:opacity-40 disabled:cursor-not-allowed">
+                    Clock In
+                </button>
+                <button id="mobileClockOut" data-clock="out" class="bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-xl font-bold disabled:opacity-40 disabled:cursor-not-allowed">
+                    Clock Out
                 </button>
             </div>
         </div>
 
-        <!-- 2. SECTION MEMBERSHIP (DI-HIDE LEBIH DULU) -->
-        <div id="sectionMembership" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200">
-            <h2 class="text-xl font-bold mb-4 text-blue-600">Membership Padel (Admin Mode)</h2>
-            
-            <div class="space-y-3 mb-6">
-                <input id="namaMember" type="text" placeholder="Nama Member" class="border p-2 rounded w-full">
-                <input id="teleponMember" type="text" placeholder="No. WhatsApp" class="border p-2 rounded w-full">
-                <select id="paketMember" class="border p-2 rounded w-full">
-                    <option value="Monthly (1 Bulan)">Monthly (1 Bulan)</option>
-                    <option value="6 Months Package">6 Months Package</option>
-                    <option value="VIP Annual">VIP Annual</option>
-                </select>
-                <button onclick="tambahMember()" class="bg-blue-600 text-white w-full py-2 rounded font-semibold hover:bg-blue-700">Daftarkan Member</button>
+        <!-- LAPORAN SINGKAT HARI INI -->
+        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-2">
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Rekapitulasi Bulan Ini</h4>
+            <div id="mobileReportSummary" class="flex justify-between text-xs text-slate-300 pt-1">
+                <span>Hadir <b>0</b></span>
+                <span>Izin <b>0</b></span>
+                <span>Absen <b>0</b></span>
             </div>
-
-            <h3 class="font-semibold text-slate-700 mb-2">Daftar Member Aktif</h3>
-            <div id="listMember" class="space-y-2"></div>
         </div>
 
     </div>
 
-    <!-- MODAL POPUP LOGIN PIN ADMIN -->
-    <div id="modalLogin" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-        <div class="bg-white p-6 rounded-xl w-full max-w-sm space-y-4">
-            <h3 class="font-bold text-lg text-slate-800">Verifikasi Admin</h3>
-            <p class="text-xs text-slate-500">Masukkan PIN khusus untuk membuka akses Membership & Management.</p>
-            <input id="pinInput" type="password" placeholder="Masukkan PIN (Default: 1234)" class="border p-2 rounded w-full text-center text-lg tracking-widest">
-            <div class="flex gap-2">
-                <button onclick="tutupModalLogin()" class="w-1/2 bg-slate-200 text-slate-700 py-2 rounded font-semibold">Batal</button>
-                <button onclick="verifikasiPin()" class="w-1/2 bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700">Masuk</button>
-            </div>
+    <!-- MODAL POPUP TAKE SELFIE CLOCK IN/OUT -->
+    <div id="clockModal" class="modal-backdrop fixed inset-0 bg-black/80 items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 p-6 rounded-2xl max-w-sm w-full border border-slate-700 space-y-4">
+            <h3 id="clockTitle" class="text-lg font-bold text-white">Clock In</h3>
+            <p id="clockDescription" class="text-xs text-slate-400"></p>
+            
+            <form id="clockForm" class="space-y-4">
+                <input type="hidden" name="employeeId">
+                <input type="checkbox" name="replacement" class="hidden">
+                
+                <div class="space-y-2">
+                    <label class="block text-xs text-slate-300">Ambil Foto Selfie Presensi</label>
+                    <input id="selfieInput" type="file" accept="image/*" capture="user" required class="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500">
+                    <img id="selfiePreview" class="hidden w-full h-48 object-cover rounded-xl border border-slate-700">
+                </div>
+
+                <p id="clockLocationMessage" class="text-xs text-amber-400 font-medium"></p>
+
+                <div class="flex gap-2">
+                    <button type="button" data-close-modal class="w-1/2 bg-slate-700 text-slate-300 py-2.5 rounded-xl text-sm font-semibold">Batal</button>
+                    <button type="submit" class="w-1/2 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-sm font-bold">Kirim Presensi</button>
+                </div>
+            </form>
         </div>
     </div>
 
