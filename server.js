@@ -7,6 +7,11 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL belum diset. Server membutuhkan koneksi PostgreSQL/Supabase.');
+  process.exitCode = 1;
+}
+
 // Koneksi ke Supabase PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -14,8 +19,8 @@ const pool = new Pool({
 });
 
 // Middleware
-app.use(bodyParser.json({ limit: '15mb' }));
-app.use(bodyParser.urlencoded({ limit: '15mb', extended: true }));
+app.use(bodyParser.json({ limit: '20mb' }));
+app.use(bodyParser.urlencoded({ limit: '20mb', extended: true }));
 
 // Supporting public / Public folder (Case-Sensitive Safe)
 const PUBLIC_DIR = fs.existsSync(path.join(__dirname, 'public')) 
@@ -120,14 +125,21 @@ async function initDB() {
 
     console.log("Database Supabase PostgreSQL Terkoneksi & Siap!");
   } catch (err) {
-    console.error("Gagal koneksi Supabase:", err);
+    console.error("Gagal koneksi Supabase:", err.message);
+    throw err;
   }
 }
 
-initDB();
-
 // Endpoints API
 app.get('/api/lokasi', (req, res) => res.json(LOKASI_PADEL));
+app.get('/api/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', database: 'connected', persistent: true });
+  } catch (err) {
+    res.status(503).json({ status: 'error', database: 'disconnected' });
+  }
+});
 
 app.get('/api/karyawan', async (req, res) => {
   try {
@@ -159,6 +171,31 @@ app.delete('/api/karyawan/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM karyawan WHERE id_karyawan = $1', [req.params.id]);
     res.json({ message: 'Karyawan dihapus!' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// API IMPOR DATA KARYAWAN MASSAL
+app.post('/api/karyawan/import', async (req, res) => {
+  const listKaryawan = req.body;
+  if (!Array.isArray(listKaryawan)) {
+    return res.status(400).json({ error: 'Format data tidak valid! Harus berupa list/array.' });
+  }
+
+  try {
+    for (const item of listKaryawan) {
+      if (item.id_karyawan && item.nama) {
+        await pool.query(`
+          INSERT INTO karyawan (id_karyawan, nama, no_hp, tgl_join) VALUES ($1, $2, $3, $4)
+          ON CONFLICT (id_karyawan) DO UPDATE SET nama = $2, no_hp = $3;
+        `, [
+          item.id_karyawan, 
+          item.nama, 
+          item.no_hp || '-', 
+          item.tgl_join || new Date().toISOString().split('T')[0]
+        ]);
+      }
+    }
+    res.json({ message: 'Impor data karyawan berhasil!' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -257,7 +294,15 @@ app.get('/api/riwayat', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Fallback jika API route tidak ditemukan (Return JSON Error, BUKAN HTML)
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: `Rute API '${req.originalUrl}' tidak ditemukan!` });
+});
+
+// Fallback Halaman Utama
 app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 app.use((req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 
-app.listen(PORT, '0.0.0.0', () => console.log(`Server Absensi Padel berjalan pada port ${PORT}`));
+initDB()
+  .then(() => app.listen(PORT, '0.0.0.0', () => console.log(`Server Absensi Padel berjalan pada port ${PORT}`)))
+  .catch(() => process.exitCode = 1);
