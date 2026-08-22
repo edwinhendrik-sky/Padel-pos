@@ -76,17 +76,29 @@
     try {
       const res = await fetch('/api/karyawan');
       const data = await res.json();
-      const user = data.find(k => k.id_karyawan.toLowerCase() === idInput.toLowerCase() || k.no_hp === idInput);
+      
+      // Pencocokan ID Karyawan atau No. HP secara fleksibel
+      const user = data.find(k => 
+        (k.id_karyawan && k.id_karyawan.toLowerCase() === idInput.toLowerCase()) || 
+        (k.no_hp && k.no_hp.replace(/\D/g, '') === idInput.replace(/\D/g, ''))
+      );
 
       if (user) {
         const role = user.id_karyawan.toUpperCase().includes('ADMIN') ? 'admin' : 'karyawan';
         localStorage.clear();
-        localStorage.setItem('user_padel', JSON.stringify({ id_karyawan: user.id_karyawan, nama: user.nama, role }));
+        localStorage.setItem('user_padel', JSON.stringify({ 
+          id_karyawan: user.id_karyawan, 
+          nama: user.nama, 
+          role: role 
+        }));
+        
         window.location.href = role === 'admin' ? '/admin.html' : '/';
       } else {
-        alert('Data Karyawan tidak ditemukan!');
+        alert(`ID Karyawan / No. HP "${idInput}" tidak terdaftar di sistem!`);
       }
-    } catch (err) { alert('Gagal menghubungkan ke server!'); }
+    } catch (err) { 
+      alert('Gagal menghubungkan ke server backend!'); 
+    }
   });
 </script>
 

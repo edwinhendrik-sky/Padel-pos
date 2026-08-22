@@ -43,21 +43,31 @@
     video, canvas, img.preview-photo { width: 100%; max-height: 220px; border-radius: 6px; object-fit: cover; }
     .btn-cam { background: #17a2b8; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 8px; }
     
-    /* Container Peta Google Maps / OpenStreetMap */
+    /* Container Peta GPS */
     #map { width: 100%; height: 220px; border-radius: 8px; border: 1px solid #ccc; }
     .info-jarak { font-size: 11px; font-weight: bold; margin-top: 6px; text-align: center; color: #1b4d3e; }
 
-    .btn-absen { 
-      width: 100%; background-color: #28a745; color: white; border: none; padding: 14px; 
-      font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; 
-      transition: background 0.2s; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); margin-top: 10px;
+    /* Tombol Absen Action */
+    .btn-group-absen { display: flex; gap: 12px; margin-top: 15px; }
+    .btn-absen-in { 
+      flex: 1; background-color: #28a745; color: white; border: none; padding: 14px; 
+      font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; 
+      transition: background 0.2s; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2);
     }
-    .btn-absen:hover { background-color: #218838; }
+    .btn-absen-in:hover { background-color: #218838; }
+
+    .btn-absen-out { 
+      flex: 1; background-color: #dc3545; color: white; border: none; padding: 14px; 
+      font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; 
+      transition: background 0.2s; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2);
+    }
+    .btn-absen-out:hover { background-color: #c82333; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; border-radius: 8px; overflow: hidden; }
     th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eeeeee; font-size: 13px; vertical-align: middle; }
     th { background-color: #f1f3f5; color: #495057; font-weight: 700; border-bottom: 2px solid #dee2e6; }
-    .badge-hadir { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background-color: #d4edda; color: #155724; }
+    
+    .badge-hadir { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background-color: #d4edda; color: #155724; display: inline-block; }
     .img-thumb { width: 45px; height: 45px; border-radius: 6px; object-fit: cover; border: 1px solid #ddd; }
   </style>
 </head>
@@ -77,12 +87,12 @@
   </div>
 
   <div class="card">
-    <h3>Absensi Kehadiran Harian</h3>
+    <h3>Absensi Presensi Harian (Clock In & Out)</h3>
     <div class="absen-section">
       
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
         <div class="form-group">
-          <label for="pilihLokasi">Pilih Lokasi Kantor Bertugas:</label>
+          <label for="pilihLokasi">Lokasi Kantor Bertugas:</label>
           <select id="pilihLokasi" onchange="perbaruiPetaKantor()">
             <option value="del_luna">Padel Del Luna (Sudirman Bandung)</option>
             <option value="boss_mengger">Padel Boss (Mengger Bandung)</option>
@@ -94,15 +104,16 @@
           <select id="pilihShift">
             <option value="Shift 1">Shift 1</option>
             <option value="Shift 2">Shift 2</option>
-            <option value="Shift Custom">Shift Custom / Full</option>
+            <option value="Shift Custom">Shift Custom</option>
           </select>
         </div>
       </div>
 
+      <!-- Grid Presensi Kamera & Maps -->
       <div class="grid-absen">
         <!-- Box 1: Selfie Kamera -->
         <div>
-          <label>1. Foto Selfie Kehadiran:</label>
+          <label>1. Foto Selfie Kehadiran (Live):</label>
           <div class="camera-box">
             <video id="webcam" autoplay playsinline></video>
             <canvas id="canvas" style="display:none;"></canvas>
@@ -119,7 +130,11 @@
         </div>
       </div>
 
-      <button class="btn-absen" onclick="kirimAbsen()">CHECK-IN / ABSEN SEKARANG</button>
+      <!-- Tombol Aksi Check-In & Check-Out -->
+      <div class="btn-group-absen">
+        <button class="btn-absen-in" onclick="kirimAbsen('in')">CHECK-IN (MASUK)</button>
+        <button class="btn-absen-out" onclick="kirimAbsen('out')">CHECK-OUT (PULANG)</button>
+      </div>
     </div>
 
     <h3>Riwayat Absensi Anda</h3>
@@ -129,7 +144,7 @@
           <th>Foto</th>
           <th>Tanggal</th>
           <th>Lokasi / Shift</th>
-          <th>Waktu Masuk</th>
+          <th>Waktu (In / Out)</th>
           <th>Status</th>
         </tr>
       </thead>
@@ -155,7 +170,6 @@
   let circleRadius = null;
   let masterLokasi = {};
 
-  // 1. Cek Sesi & Load Master Lokasi Dari Server
   async function cekSesiKaryawan() {
     const userSession = localStorage.getItem('user_padel');
     if (!userSession) { window.location.href = '/login.html'; return; }
@@ -176,7 +190,6 @@
     } catch (err) { console.error("Gagal mengambil data lokasi master", err); }
   }
 
-  // 2. Inisialisasi Kamera Selfie
   async function initKamera() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
@@ -212,7 +225,6 @@
     }
   }
 
-  // 3. Inisialisasi Peta GPS & Titik Kantor Terpilih
   function initGPSMaps() {
     if (!navigator.geolocation) {
       document.getElementById('map').innerHTML = "Geolocation GPS tidak didukung browser ini.";
@@ -229,10 +241,7 @@
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
 
-      // Marker Posisi User (Biru)
-      markerUser = L.marker([userLat, userLng]).addTo(map)
-        .bindPopup("<b>Posisi Anda</b>");
-
+      markerUser = L.marker([userLat, userLng]).addTo(map).bindPopup("<b>Posisi Anda</b>");
       perbaruiPetaKantor();
 
     }, (err) => {
@@ -240,55 +249,42 @@
     }, { enableHighAccuracy: true });
   }
 
-  // Memperbarui Titik Kantor & Radius Geofencing saat Pilihan Dropdown Berubah
   function perbaruiPetaKantor() {
     if (!map) return;
-    
     const kodeLokasi = document.getElementById('pilihLokasi').value;
     const kantor = masterLokasi[kodeLokasi];
-
     if (!kantor) return;
 
-    // Hapus marker kantor & circle lama jika ada
     if (markerKantor) map.removeLayer(markerKantor);
     if (circleRadius) map.removeLayer(circleRadius);
 
-    // Marker Kantor
-    markerKantor = L.marker([kantor.lat, kantor.lng]).addTo(map)
-      .bindPopup(`<b>${kantor.nama}</b><br>Titik Pusat Absensi`).openPopup();
+    markerKantor = L.marker([kantor.lat, kantor.lng]).addTo(map).bindPopup(`<b>${kantor.nama}</b><br>Titik Absensi`).openPopup();
 
-    // Lingkaran Radius Izin (50 Meter)
     circleRadius = L.circle([kantor.lat, kantor.lng], {
-      color: '#1b4d3e',
-      fillColor: '#28a745',
-      fillOpacity: 0.2,
-      radius: kantor.radius_meter || 50
+      color: '#1b4d3e', fillColor: '#28a745', fillOpacity: 0.2, radius: kantor.radius_meter || 50
     }).addTo(map);
 
-    // Hitung jarak user ke kantor jika GPS aktif
     if (userLat !== null && userLng !== null) {
       const jarakM = Math.round(map.distance([userLat, userLng], [kantor.lat, kantor.lng]));
       const infoEl = document.getElementById('infoJarak');
       
       if (jarakM <= (kantor.radius_meter || 50)) {
-        infoEl.innerHTML = `<span style="color:#28a745;">✔ Jarak Anda: <b>${jarakM}m</b> dari ${kantor.nama} (Di dalam radius izin)</span>`;
+        infoEl.innerHTML = `<span style="color:#28a745;">✔ Jarak Anda: <b>${jarakM}m</b> dari ${kantor.nama} (Di dalam radius)</span>`;
       } else {
-        infoEl.innerHTML = `<span style="color:#dc3545;">✖ Jarak Anda: <b>${jarakM}m</b> dari ${kantor.nama} (Maks radius ${kantor.radius_meter}m)</span>`;
+        infoEl.innerHTML = `<span style="color:#dc3545;">✖ Jarak Anda: <b>${jarakM}m</b> dari ${kantor.nama} (Maks ${kantor.radius_meter}m)</span>`;
       }
       
-      // Fokuskan tampilan peta ke tengah antara posisi user dan kantor
       const group = new L.featureGroup([markerUser, markerKantor]);
       map.fitBounds(group.getBounds().pad(0.2));
     }
   }
 
-  // 4. Kirim Absen Check-In ke Server
-  async function kirimAbsen() {
+  async function kirimAbsen(tipe) {
     const kode_lokasi = document.getElementById('pilihLokasi').value;
     const shift = document.getElementById('pilihShift').value;
 
     if (!base64Foto) {
-      alert('Silakan ambil foto selfie terlebih dahulu!');
+      alert('Silakan ambil foto selfie live terlebih dahulu!');
       return;
     }
 
@@ -297,33 +293,31 @@
       return;
     }
 
+    const endpoint = tipe === 'in' ? '/api/clock-in' : '/api/clock-out';
+    const payload = {
+      id_karyawan: currentUser.id_karyawan,
+      kode_lokasi: kode_lokasi,
+      shift: shift,
+      user_lat: userLat,
+      user_lng: userLng,
+      foto: base64Foto
+    };
+
     try {
-      const res = await fetch('/api/clock-in', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_karyawan: currentUser.id_karyawan,
-          kode_lokasi: kode_lokasi,
-          shift: shift,
-          user_lat: userLat,
-          user_lng: userLng,
-          foto: base64Foto
-        })
+        body: JSON.stringify(payload)
       });
 
       const result = await res.json();
-      if (res.ok) {
-        alert(result.message || 'Check-in berhasil dicatat!');
-        loadRiwayatAbsen();
-      } else {
-        alert(result.error || 'Gagal melakukan absen.');
-      }
+      alert(result.message || result.error);
+      if (res.ok) loadRiwayatAbsen();
     } catch (err) {
       alert('Terjadi kesalahan koneksi ke server.');
     }
   }
 
-  // 5. Load Riwayat Absensi
   async function loadRiwayatAbsen() {
     try {
       const res = await fetch('/api/riwayat');
@@ -339,12 +333,15 @@
 
       userRiwayat.forEach(item => {
         const fotoImg = item.foto_in ? `<img src="${item.foto_in}" class="img-thumb" />` : '-';
+        const clockInTime = item.waktu || (item.clock_in ? new Date(item.clock_in).toLocaleTimeString('id-ID') : '-');
+        const clockOutTime = item.clock_out ? new Date(item.clock_out).toLocaleTimeString('id-ID') : '-';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${fotoImg}</td>
           <td><b>${item.tanggal || '-'}</b></td>
           <td><small>${item.lokasi || '-'}</small><br><b>${item.shift || '-'}</b></td>
-          <td>${item.waktu || item.clock_in || '-'}</td>
+          <td><b>In:</b> ${clockInTime}<br><b>Out:</b> ${clockOutTime}</td>
           <td><span class="badge-hadir">Hadir</span></td>
         `;
         tbody.appendChild(tr);

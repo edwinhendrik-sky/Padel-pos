@@ -3,181 +3,265 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kelola Data Karyawan - Padel Club</title>
+  <title>Manajemen Karyawan - Padel Club</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-    .container { max-width: 900px; margin: 0 auto; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .btn-nav { text-decoration: none; background-color: #6c757d; color: white; padding: 10px 16px; border-radius: 6px; font-weight: 600; font-size: 14px; }
-    .btn-nav:hover { background-color: #5a6268; }
-    
-    .card { background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 25px; }
-    h2, h3 { margin-top: 0; color: #1a252f; }
-    
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .form-group { margin-bottom: 15px; }
-    .form-group.full-width { grid-column: span 2; }
-    label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 14px; }
-    input { width: 100%; padding: 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; }
-    input:focus { border-color: #007bff; outline: none; }
-    
-    .btn-submit { background-color: #007bff; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer; width: 100%; }
-    .btn-submit:hover { background-color: #0056b3; }
-    .btn-delete { background-color: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    .btn-delete:hover { background-color: #c82333; }
+    .container { max-width: 1000px; margin: 0 auto; }
+
+    .nav-bar { 
+      display: flex; justify-content: space-between; align-items: center; 
+      margin-bottom: 20px; flex-wrap: wrap; gap: 15px; 
+      background: linear-gradient(135deg, #1b4d3e 0%, #2c5e4a 100%); 
+      padding: 18px 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      color: white;
+    }
+    .brand-title h2 { margin: 0; font-size: 20px; color: #fff; }
+    .user-info { font-weight: 500; color: #f4b41a; font-size: 13px; }
+
+    .btn-header { text-decoration: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; color: white; display: inline-block; cursor: pointer; border: none; }
+    .btn-back { background-color: #6c757d; }
+    .btn-back:hover { background-color: #5a6268; }
+
+    .card { background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+    h3 { margin: 0; color: #1b4d3e; }
+
+    .btn-add { background-color: #28a745; color: white; padding: 9px 16px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; font-size: 13px; }
+    .btn-add:hover { background-color: #218838; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; border-radius: 8px; overflow: hidden; }
-    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eeeeee; font-size: 14px; }
-    th { background-color: #343a40; color: white; font-weight: 600; }
-    tr:hover { background-color: #f8f9fa; }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eeeeee; font-size: 13px; vertical-align: middle; }
+    th { background-color: #f1f3f5; color: #495057; font-weight: 700; border-bottom: 2px solid #dee2e6; }
+    
+    .btn-edit { background-color: #ffc107; color: #212529; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; margin-right: 4px; }
+    .btn-delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+
+    .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+    .modal-content { background-color: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+    .close-btn { float: right; font-size: 22px; font-weight: bold; cursor: pointer; color: #aaa; }
+    
+    .form-group { margin-bottom: 12px; }
+    label { font-weight: 600; display: block; margin-bottom: 4px; font-size: 12px; color: #495057; }
+    input { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+    input[readonly] { background-color: #e9ecef; font-weight: bold; cursor: not-allowed; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-cancel { flex: 1; background-color: #6c757d; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-submit { flex: 2; background-color: #28a745; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
 
 <div class="container">
   
-  <div class="header">
-    <h2>Master Data Karyawan</h2>
-    <a href="/" class="btn-nav">← Ke Halaman Absensi</a>
+  <div class="nav-bar">
+    <div class="brand-title">
+      <h2>Manajemen Data Karyawan</h2>
+      <div class="user-info">Padel Del Luna & Boss Mengger</div>
+    </div>
+    <div>
+      <a href="/admin.html" class="btn-header btn-back">❮ Kembali ke Dashboard</a>
+    </div>
   </div>
 
-  <!-- Form Tambah Karyawan -->
   <div class="card">
-    <h3>Tambah Karyawan Baru</h3>
-    <form id="formKaryawan">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="idKaryawan">ID Karyawan:</label>
-          <input type="text" id="idKaryawan" placeholder="Contoh: PDL-001" required>
-        </div>
+    <div class="card-header">
+      <h3>Daftar Karyawan Aktif</h3>
+      <button class="btn-add" onclick="bukaModalTambah()">+ Tambah Karyawan Baru</button>
+    </div>
 
-        <div class="form-group">
-          <label for="namaKaryawan">Nama Lengkap:</label>
-          <input type="text" id="namaKaryawan" placeholder="Contoh: Edwin Hendrik" required>
-        </div>
-
-        <div class="form-group">
-          <label for="noHp">No. WhatsApp/HP:</label>
-          <input type="tel" id="noHp" placeholder="Contoh: 081111111111" required>
-        </div>
-
-        <div class="form-group">
-          <label for="tglJoin">Tanggal Join:</label>
-          <input type="date" id="tglJoin" required>
-        </div>
-      </div>
-
-      <button type="submit" class="btn-submit">Simpan Karyawan</button>
-    </form>
-  </div>
-
-  <!-- Tabel Daftar Karyawan -->
-  <div class="card">
-    <h3>Daftar Karyawan Aktif</h3>
     <table>
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Nama Karyawan</th>
-          <th>No. Telepon</th>
-          <th>Tanggal Join</th>
-          <th>Aksi</th>
+          <th>ID Karyawan</th>
+          <th>Nama Lengkap</th>
+          <th>No. WhatsApp</th>
+          <th>Tgl Bergabung</th>
+          <th style="text-align: center;">Aksi</th>
         </tr>
       </thead>
       <tbody id="tabelKaryawan">
-        <tr><td colspan="5" style="text-align: center;">Memuat data...</td></tr>
+        <tr><td colspan="5" style="text-align: center;">Memuat data karyawan...</td></tr>
       </tbody>
     </table>
   </div>
 
 </div>
 
+<!-- Modal Form Karyawan -->
+<div id="modalKaryawan" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="tutupModal()">&times;</span>
+    <h3 id="modalTitle">Tambah Data Karyawan</h3>
+    
+    <form id="formKaryawan" style="margin-top: 15px;">
+      <input type="hidden" id="formMode" value="add">
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="idKaryawan">ID Karyawan:</label>
+          <input type="text" id="idKaryawan" readonly>
+        </div>
+        <div class="form-group" id="groupTglJoin">
+          <label for="tglJoin">Tanggal Bergabung:</label>
+          <input type="date" id="tglJoin">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="nama">Nama Lengkap:</label>
+        <input type="text" id="nama" placeholder="Masukkan nama karyawan" required>
+      </div>
+
+      <div class="form-group">
+        <label for="noHp">No. WhatsApp / HP:</label>
+        <input type="text" id="noHp" placeholder="Contoh: 08123456789" required>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="tutupModal()">Batal</button>
+        <button type="submit" class="btn-submit">Simpan Data</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
-  // 1. Load Data Karyawan
-  async function loadKaryawan() {
+  let cacheKaryawan = [];
+
+  // Hitung ID Otomatis Berurut (PDL-001, PDL-002)
+  function generateNextId() {
+    let maxNum = 0;
+    cacheKaryawan.forEach(item => {
+      if (item.id_karyawan && item.id_karyawan.startsWith('PDL-')) {
+        const numPart = parseInt(item.id_karyawan.replace('PDL-', ''), 10);
+        if (!isNaN(numPart) && numPart > maxNum) maxNum = numPart;
+      }
+    });
+    return `PDL-${String(maxNum + 1).padStart(3, '0')}`;
+  }
+
+  async function loadDataKaryawan() {
     try {
       const res = await fetch('/api/karyawan');
-      const data = await res.json();
-      const tbody = document.getElementById('tabelKaryawan');
-      tbody.innerHTML = '';
-
-      if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Belum ada data karyawan.</td></tr>';
-        return;
-      }
-
-      data.forEach(k => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><b>${k.id_karyawan}</b></td>
-          <td>${k.nama}</td>
-          <td>${k.no_hp}</td>
-          <td>${k.tgl_join}</td>
-          <td>
-            <button class="btn-delete" onclick="hapusKaryawan('${k.id_karyawan}')">Hapus</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+      if (!res.ok) throw new Error("Gagal mengambil data karyawan dari server");
+      
+      cacheKaryawan = await res.json();
+      renderTabel(cacheKaryawan);
     } catch (err) {
-      console.error("Gagal memuat karyawan:", err);
+      console.error(err);
+      document.getElementById('tabelKaryawan').innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error: ${err.message}</td></tr>`;
     }
   }
 
-  // 2. Submit Karyawan Baru
+  function renderTabel(data) {
+    const tbody = document.getElementById('tabelKaryawan');
+    tbody.innerHTML = '';
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Tidak ada data karyawan.</td></tr>';
+      return;
+    }
+
+    data.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><b>${item.id_karyawan}</b></td>
+        <td>${item.nama}</td>
+        <td>${item.no_hp || '-'}</td>
+        <td>${item.tgl_join || '-'}</td>
+        <td style="text-align: center;">
+          <button class="btn-edit" onclick="bukaModalEdit('${item.id_karyawan}')">Edit</button>
+          <button class="btn-delete" onclick="hapusKaryawan('${item.id_karyawan}', '${item.nama}')">Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function bukaModalTambah() {
+    document.getElementById('formKaryawan').reset();
+    document.getElementById('formMode').value = 'add';
+    document.getElementById('modalTitle').textContent = 'Tambah Data Karyawan Baru';
+    document.getElementById('idKaryawan').value = generateNextId();
+    document.getElementById('groupTglJoin').style.display = 'block';
+    document.getElementById('tglJoin').valueAsDate = new Date();
+    document.getElementById('modalKaryawan').style.display = 'flex';
+  }
+
+  function bukaModalEdit(id) {
+    const item = cacheKaryawan.find(k => k.id_karyawan === id);
+    if (!item) return;
+
+    document.getElementById('formMode').value = 'edit';
+    document.getElementById('modalTitle').textContent = `Edit Data Karyawan (${id})`;
+    document.getElementById('idKaryawan').value = item.id_karyawan;
+    document.getElementById('nama').value = item.nama;
+    document.getElementById('noHp').value = item.no_hp || '';
+    document.getElementById('groupTglJoin').style.display = 'none';
+
+    document.getElementById('modalKaryawan').style.display = 'flex';
+  }
+
+  function tutupModal() {
+    document.getElementById('modalKaryawan').style.display = 'none';
+  }
+
   document.getElementById('formKaryawan').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const id_karyawan = document.getElementById('idKaryawan').value;
-    const nama = document.getElementById('namaKaryawan').value;
-    const no_hp = document.getElementById('noHp').value;
-    const tgl_join = document.getElementById('tglJoin').value;
+    const mode = document.getElementById('formMode').value;
+    const id_karyawan = document.getElementById('idKaryawan').value.trim();
+    const nama = document.getElementById('nama').value.trim();
+    const no_hp = document.getElementById('noHp').value.trim();
+    const tgl_join = document.getElementById('tglJoin').value || new Date().toISOString().split('T')[0];
+
+    const payload = { id_karyawan, nama, no_hp, tgl_join };
 
     try {
-      const res = await fetch('/api/karyawan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_karyawan, nama, no_hp, tgl_join })
-      });
+      let res;
+      if (mode === 'add') {
+        res = await fetch('/api/karyawan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch(`/api/karyawan/${id_karyawan}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nama, no_hp })
+        });
+      }
 
       const result = await res.json();
-      if (res.ok) {
-        alert(result.message);
-        document.getElementById('formKaryawan').reset();
-        loadKaryawan();
-      } else {
-        alert(result.error);
-      }
+      if (!res.ok) throw new Error(result.error || 'Gagal menyimpan data!');
+
+      alert('Data karyawan berhasil disimpan!');
+      tutupModal();
+      loadDataKaryawan();
     } catch (err) {
-      alert('Gagal menyimpan data ke server!');
+      alert(err.message);
     }
   });
 
-  // 3. Hapus Data Karyawan
-  async function hapusKaryawan(id_karyawan) {
-    if (!confirm(`Apakah Anda yakin ingin menghapus karyawan ${id_karyawan}?`)) return;
-
-    try {
-      const res = await fetch(`/api/karyawan/${id_karyawan}`, { method: 'DELETE' });
-      const result = await res.json();
-
-      if (res.ok) {
+  async function hapusKaryawan(id, nama) {
+    if (confirm(`Apakah Anda yakin ingin menghapus "${nama}" (${id})?`)) {
+      try {
+        const res = await fetch(`/api/karyawan/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Gagal menghapus data!');
         alert(result.message);
-        loadKaryawan();
-      } else {
-        alert(result.error);
+        loadDataKaryawan();
+      } catch (err) {
+        alert(err.message);
       }
-    } catch (err) {
-      alert('Gagal menghapus data!');
     }
   }
 
-  // Set default tanggal hari ini pada form
-  document.getElementById('tglJoin').valueAsDate = new Date();
-
-  // Load awal
-  loadKaryawan();
+  window.onload = () => { loadDataKaryawan(); };
 </script>
 
 </body>
