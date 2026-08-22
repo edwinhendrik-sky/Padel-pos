@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 const DB_PATH = './absensi_padel.db';
 
 // Inisialisasi Database
@@ -14,6 +14,8 @@ db.pragma('journal_mode = WAL');
 // Middleware
 app.use(bodyParser.json({ limit: '15mb' }));
 app.use(bodyParser.urlencoded({ limit: '15mb', extended: true }));
+
+// Serving Folder Statis (Folder 'public')
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Master Lokasi Padel
@@ -22,7 +24,7 @@ const LOKASI_PADEL = {
     nama: "Padel Del Luna",
     lat: -6.918133332267737,
     lng: 107.58425180908361,
-    radius_meter: 50,
+    radius_meter: 10,
     shifts: [
       { id: "L1", nama: "Shift 1 (07:00 - 15:00)" },
       { id: "L2", nama: "Shift 2 (14:00 - 22:00)" },
@@ -33,7 +35,7 @@ const LOKASI_PADEL = {
     nama: "Padel Boss Mengger",
     lat: -6.966117949983328,
     lng: 107.62140225511331,
-    radius_meter: 50,
+    radius_meter: 10,
     shifts: [
       { id: "M1", nama: "Shift 1 (08:00 - 16:00)" },
       { id: "M2", nama: "Shift 2 (13:00 - 23:00)" },
@@ -113,7 +115,18 @@ db.prepare(`INSERT OR IGNORE INTO komponen_gaji (id_karyawan, gaji_pokok, tunjan
 db.prepare(`INSERT OR IGNORE INTO rekening_karyawan (id_karyawan, nama_bank, no_rekening, nama_pemilik) 
         VALUES ('PDL-001', 'Seabank', '901153058318', 'Nazwa Verylta')`).run();
 
-// Endpoints API
+// =========================================================================
+// === RUTE HALAMAN UTAMA (FIX CANNOT GET /) ================================
+// =========================================================================
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// =========================================================================
+// === ENDPOINTS API =======================================================
+// =========================================================================
+
 app.get('/api/lokasi', (req, res) => res.json(LOKASI_PADEL));
 
 app.get('/api/karyawan', (req, res) => {
@@ -262,4 +275,9 @@ app.post('/api/admin/reset-database', (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`Server berjalan di http://localhost:${PORT}`));
+// Fallback Route untuk Express v5 (Mengarahkan rute yang tak terdaftar ke index.html)
+app.get('/*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(PORT, '0.0.0.0', () => console.log(`Server Absensi Padel berjalan pada port ${PORT}`));
