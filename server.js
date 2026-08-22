@@ -9,7 +9,7 @@ const DB_PATH = './absensi_padel.db';
 
 const db = new sqlite3.Database(DB_PATH);
 
-// Middleware (Limit dinaikkan ke 10MB untuk menangani unggahan foto selfie Base64)
+// Middleware (Limit 10MB untuk menangani unggahan foto selfie Base64)
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -22,7 +22,7 @@ const LOKASI_PADEL = {
     nama: "Padel Del Luna",
     lat: -6.918133332267737,
     lng: 107.58425180908361,
-    radius_meter: 10,
+    radius_meter: 50,
     shifts: [
       { id: "L1", nama: "Shift 1 (07:00 - 15:00)" },
       { id: "L2", nama: "Shift 2 (14:00 - 22:00)" },
@@ -33,7 +33,7 @@ const LOKASI_PADEL = {
     nama: "Padel Boss Mengger",
     lat: -6.966117949983328,
     lng: 107.62140225511331,
-    radius_meter: 10,
+    radius_meter: 50,
     shifts: [
       { id: "M1", nama: "Shift 1 (08:00 - 16:00)" },
       { id: "M2", nama: "Shift 2 (13:00 - 23:00)" },
@@ -56,7 +56,7 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 }
 
 // =========================================================================
-// === INISIALISASI DB SQLITE & STRUKTUR TABEL ============================
+// === DB INIT SQLITE & AUTO MIGRATION COLUMNS =============================
 // =========================================================================
 db.serialize(() => {
   // 1. Tabel Karyawan
@@ -83,13 +83,27 @@ db.serialize(() => {
     id_karyawan TEXT UNIQUE NOT NULL,
     gaji_pokok REAL NOT NULL DEFAULT 0,
     tunjangan_shift REAL NOT NULL DEFAULT 0,
-    tunjangan_weekend REAL NOT NULL DEFAULT 0,
+    tunjangan_weekend REAL NOT NULL DEFAULT 25000,
     tunjangan_makan_transport REAL NOT NULL DEFAULT 0,
     bonus_kehadiran REAL NOT NULL DEFAULT 0,
+    lembur_jam REAL NOT NULL DEFAULT 0,
     tambahan_lain REAL NOT NULL DEFAULT 0,
     potongan_lain REAL NOT NULL DEFAULT 0,
     FOREIGN KEY (id_karyawan) REFERENCES karyawan (id_karyawan) ON DELETE CASCADE
-  )`);
+  )`, () => {
+    // Migrasi kolom lembur_jam & tunjangan_weekend jika database lama belum memilikinya
+    const gajiColumns = [
+      'tunjangan_weekend REAL DEFAULT 25000',
+      'tunjangan_makan_transport REAL DEFAULT 0',
+      'bonus_kehadiran REAL DEFAULT 0',
+      'lembur_jam REAL DEFAULT 0',
+      'tambahan_lain REAL DEFAULT 0',
+      'potongan_lain REAL DEFAULT 0'
+    ];
+    gajiColumns.forEach(col => {
+      db.run(`ALTER TABLE komponen_gaji ADD COLUMN ${col}`, () => {});
+    });
+  });
 
   // 4. Tabel Absensi
   db.run(`CREATE TABLE IF NOT EXISTS absensi (
@@ -106,18 +120,17 @@ db.serialize(() => {
     waktu TIME,
     FOREIGN KEY (id_karyawan) REFERENCES karyawan (id_karyawan)
   )`, () => {
-    // Migrasi kolom otomatis jika tabel sudah terlanjur dibuat tanpa kolom tertentu
-    const columns = [
+    const absensiColumns = [
       'kode_lokasi TEXT', 'lokasi TEXT', 'shift TEXT', 
       'clock_in DATETIME', 'foto_in TEXT', 'clock_out DATETIME', 
       'foto_out TEXT', 'waktu TIME'
     ];
-    columns.forEach(col => {
+    absensiColumns.forEach(col => {
       db.run(`ALTER TABLE absensi ADD COLUMN ${col}`, () => {});
     });
   });
 
-  // Default Akun Admin
+  // Akun Admin Default
   const stmt = db.prepare(`INSERT OR REPLACE INTO karyawan (id_karyawan, nama, no_hp, tgl_join) VALUES (?, ?, ?, ?)`);
   stmt.run(['ADMIN', 'Admin', '081111111111', '2026-01-01']);
   stmt.finalize();
@@ -127,12 +140,12 @@ db.serialize(() => {
 // === ENDPOINT MASTER DATA & LOKASI ======================================
 // =========================================================================
 
-// GET Master Lokasi GPS Kantor
+// GET Master Lokasi GPS
 app.get('/api/lokasi', (req, res) => {
   res.json(LOKASI_PADEL);
 });
 
-// GET Semua Karyawan
+// GET Karyawan List
 app.get('/api/karyawan', (req, res) => {
   db.all('SELECT * FROM karyawan ORDER BY id_karyawan ASC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -178,15 +191,13 @@ app.delete('/api/karyawan/:id', (req, res) => {
   stmt.finalize();
 });
 
-// GET Gaji & Rekening Lengkap
+// GET Master Gaji & Rekening Lengkap
 app.get('/api/gaji-lengkap', (req, res) => {
   const sql = `
     SELECT k.id_karyawan, k.nama, k.no_hp, k.tgl_join, 
            r.nama_bank, r.no_rekening, r.nama_pemilik, 
            g.gaji_pokok, g.tunjangan_shift, g.tunjangan_weekend, 
-           g.tunjangan_makan_transport, g.bonus_kehadiran, g.tambahan_lain, g.potongan_lain,
-           (COALESCE(g.gaji_pokok, 0) + COALESCE(g.tunjangan_shift, 0) + COALESCE(g.tunjangan_weekend, 0) + 
-            COALESCE(g.tunjangan_makan_transport, 0) + COALESCE(g.bonus_kehadiran, 0) + COALESCE(g.tambahan_lain, 0) - COALESCE(g.potongan_lain, 0)) AS total_gaji
+           g.tunjangan_makan_transport, g.bonus_kehadiran, g.lembur_jam, g.tambahan_lain, g.potongan_lain
     FROM karyawan k
     LEFT JOIN rekening_karyawan r ON k.id_karyawan = r.id_karyawan
     LEFT JOIN komponen_gaji g ON k.id_karyawan = g.id_karyawan
@@ -197,12 +208,12 @@ app.get('/api/gaji-lengkap', (req, res) => {
   });
 });
 
-// POST Simpan Rekening & Gaji
+// POST Simpan Rekening & Komponen Gaji
 app.post('/api/gaji-rekening', (req, res) => {
   const { 
     id_karyawan, nama_bank, no_rekening, nama_pemilik, 
     gaji_pokok, tunjangan_shift, tunjangan_weekend, 
-    tunjangan_makan_transport, bonus_kehadiran, tambahan_lain, potongan_lain 
+    tunjangan_makan_transport, bonus_kehadiran, lembur_jam, tambahan_lain, potongan_lain 
   } = req.body;
 
   if (!id_karyawan) return res.status(400).json({ error: 'ID Karyawan wajib disertakan!' });
@@ -210,19 +221,32 @@ app.post('/api/gaji-rekening', (req, res) => {
   const queryRek = `INSERT INTO rekening_karyawan (id_karyawan, nama_bank, no_rekening, nama_pemilik) VALUES (?, ?, ?, ?)
     ON CONFLICT(id_karyawan) DO UPDATE SET nama_bank=excluded.nama_bank, no_rekening=excluded.no_rekening, nama_pemilik=excluded.nama_pemilik`;
   
-  const queryGaji = `INSERT INTO komponen_gaji (id_karyawan, gaji_pokok, tunjangan_shift, tunjangan_weekend, tunjangan_makan_transport, bonus_kehadiran, tambahan_lain, potongan_lain) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id_karyawan) DO UPDATE SET gaji_pokok=excluded.gaji_pokok, tunjangan_shift=excluded.tunjangan_shift, tunjangan_weekend=excluded.tunjangan_weekend, tunjangan_makan_transport=excluded.tunjangan_makan_transport, bonus_kehadiran=excluded.bonus_kehadiran, tambahan_lain=excluded.tambahan_lain, potongan_lain=excluded.potongan_lain`;
+  const queryGaji = `INSERT INTO komponen_gaji (id_karyawan, gaji_pokok, tunjangan_shift, tunjangan_weekend, tunjangan_makan_transport, bonus_kehadiran, lembur_jam, tambahan_lain, potongan_lain) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id_karyawan) DO UPDATE SET 
+      gaji_pokok=excluded.gaji_pokok, 
+      tunjangan_shift=excluded.tunjangan_shift, 
+      tunjangan_weekend=excluded.tunjangan_weekend, 
+      tunjangan_makan_transport=excluded.tunjangan_makan_transport, 
+      bonus_kehadiran=excluded.bonus_kehadiran, 
+      lembur_jam=excluded.lembur_jam,
+      tambahan_lain=excluded.tambahan_lain, 
+      potongan_lain=excluded.potongan_lain`;
 
   db.run(queryRek, [id_karyawan, nama_bank || "", no_rekening || "", nama_pemilik || ""], (err) => {
     if (err) return res.status(500).json({ error: err.message });
     db.run(queryGaji, [
       id_karyawan, 
-      parseFloat(gaji_pokok) || 0, parseFloat(tunjangan_shift) || 0, 
-      parseFloat(tunjangan_weekend) || 0, parseFloat(tunjangan_makan_transport) || 0, 
-      parseFloat(bonus_kehadiran) || 0, parseFloat(tambahan_lain) || 0, parseFloat(potongan_lain) || 0
+      parseFloat(gaji_pokok) || 0, 
+      parseFloat(tunjangan_shift) || 0, 
+      parseFloat(tunjangan_weekend) || 25000, 
+      parseFloat(tunjangan_makan_transport) || 0, 
+      parseFloat(bonus_kehadiran) || 0, 
+      parseFloat(lembur_jam) || 0, 
+      parseFloat(tambahan_lain) || 0, 
+      parseFloat(potongan_lain) || 0
     ], (err2) => {
       if (err2) return res.status(500).json({ error: err2.message });
-      res.json({ message: 'Data rekening dan gaji berhasil disimpan!' });
+      res.json({ message: 'Data rekening dan komponen gaji berhasil disimpan!' });
     });
   });
 });
@@ -242,7 +266,7 @@ app.post('/api/clock-in', (req, res) => {
   const locKey = kode_lokasi || 'del_luna';
   const targetLokasi = LOKASI_PADEL[locKey] || LOKASI_PADEL['del_luna'];
 
-  // Verifikasi Geofencing Jarak Radius GPS
+  // Geofencing GPS Check
   if (user_lat !== undefined && user_lng !== undefined) {
     const jarak = hitungJarak(targetLokasi.lat, targetLokasi.lng, user_lat, user_lng);
     if (jarak > targetLokasi.radius_meter) {
@@ -318,7 +342,7 @@ app.get('/api/riwayat', (req, res) => {
 // === ENDPOINT ADMIN KHUSUS ===============================================
 // =========================================================================
 
-// Endpoint Reset Database (Khusus tombol Reset di Dashboard Admin)
+// Endpoint Reset Database
 app.post('/api/admin/reset-database', (req, res) => {
   db.serialize(() => {
     db.run(`DELETE FROM absensi`);
