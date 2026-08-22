@@ -2,15 +2,12 @@
   "name": "padel-pos",
   "version": "1.0.0",
   "main": "server.js",
-  "engines": {
-    "node": ">=20 <24"
-  },
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "body-parser": "^1.20.2",
     "express": "^4.19.2",
-    "better-sqlite3": "^11.3.0"
+    "pg": "^8.11.5"
   }
 }
