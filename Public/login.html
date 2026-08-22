@@ -3,158 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Padel Club</title>
+  <title>Login Absensi - Padel</title>
   <style>
-    * { 
-      box-sizing: border-box; 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { 
-      background-color: #f4f6f9; 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      height: 100vh; 
-      margin: 0; 
+      background: linear-gradient(135deg, #1b4d3e 0%, #2c5e4a 50%, #f4b41a 100%);
+      display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; 
     }
     .login-card { 
-      background: white; 
-      padding: 30px; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+      background: rgba(255, 255, 255, 0.95); 
+      padding: 40px 35px; 
+      border-radius: 16px; 
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
       width: 100%; 
-      max-width: 380px; 
+      max-width: 400px; 
+      text-align: center;
     }
-    h2 { 
-      margin-top: 0; 
-      text-align: center; 
-      color: #1a252f; 
-      font-size: 22px; 
-    }
-    .subtitle { 
-      text-align: center; 
-      color: #6c757d; 
-      font-size: 13px; 
-      margin-bottom: 20px; 
-    }
-    .form-group { 
-      margin-bottom: 18px; 
-    }
-    label { 
-      display: block; 
-      font-weight: 600; 
-      margin-bottom: 6px; 
-      font-size: 14px; 
-      color: #495057; 
-    }
-    input { 
-      width: 100%; 
-      padding: 12px; 
-      border: 1px solid #cccccc; 
-      border-radius: 6px; 
-      font-size: 14px; 
-    }
-    input:focus { 
-      border-color: #007bff; 
-      outline: none; 
-    }
+    
+    .brand-header { margin-bottom: 25px; }
+    .brand-header h1 { margin: 0; color: #1b4d3e; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .brand-header p { margin: 4px 0 0 0; color: #d99e12; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+    h2 { margin-top: 0; color: #1a252f; font-size: 18px; font-weight: 700; }
+    .subtitle { color: #6c757d; font-size: 13px; margin-bottom: 25px; }
+    .form-group { margin-bottom: 18px; text-align: left; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: #495057; }
+    input { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 14px; }
+    input:focus { border-color: #f4b41a; outline: none; box-shadow: 0 0 5px rgba(244, 180, 26, 0.3); }
     button { 
-      width: 100%; 
-      padding: 12px; 
-      background-color: #007bff; 
-      color: white; 
-      border: none; 
-      border-radius: 6px; 
-      font-weight: bold; 
-      cursor: pointer; 
-      font-size: 15px; 
-      transition: background-color 0.2s; 
+      width: 100%; padding: 12px; 
+      background-color: #1b4d3e; color: white; 
+      border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; 
+      transition: background 0.2s;
     }
-    button:hover { 
-      background-color: #0056b3; 
-    }
+    button:hover { background-color: #14382d; }
   </style>
 </head>
 <body>
 
 <div class="login-card">
-  <h2>Padel Management System</h2>
-  <div class="subtitle">Aplikasi Padel Integrated by Edwin Hendrik</div>
+  <div class="brand-header">
+    <h1>Management Padel</h1>
+    <p>Sudirman & Mengger Bandung</p>
+  </div>
+  
+  <h2>Portal Absensi & HR</h2>
+  <div class="subtitle">Silakan masukkan ID Karyawan atau No. HP</div>
   
   <form id="formLogin">
     <div class="form-group">
       <label for="idKaryawan">ID Karyawan / No. HP:</label>
-      <input type="text" id="idKaryawan" placeholder="Isi ID Karyawan atau No. HP" required autocomplete="off">
+      <input type="text" id="idKaryawan" placeholder="Contoh: PDL-001" required autocomplete="off">
     </div>
     <button type="submit">MASUK KE SISTEM</button>
   </form>
 </div>
 
 <script>
-  // Autoload: Pengecekan sesi jika sudah login sebelumnya
   window.onload = () => {
     const userSession = localStorage.getItem('user_padel');
     if (userSession) {
       const user = JSON.parse(userSession);
-      if (user.role === 'admin') {
-        window.location.href = '/admin.html';
-      } else {
-        window.location.href = '/';
-      }
+      if (user.role === 'admin') window.location.href = '/admin.html';
+      else window.location.href = '/';
     }
   };
 
-  // Proses Submit Form Login
   document.getElementById('formLogin').addEventListener('submit', async (e) => {
     e.preventDefault();
     const idInput = document.getElementById('idKaryawan').value.trim();
 
-    if (!idInput) {
-      alert('Masukkan ID Karyawan atau No. HP Anda!');
-      return;
-    }
-
     try {
       const res = await fetch('/api/karyawan');
       const data = await res.json();
-      
-      // Pencocokan data ID atau No HP
-      const user = data.find(k => 
-        k.id_karyawan.toLowerCase() === idInput.toLowerCase() || 
-        k.no_hp === idInput
-      );
+      const user = data.find(k => k.id_karyawan.toLowerCase() === idInput.toLowerCase() || k.no_hp === idInput);
 
       if (user) {
-        const idUpper = user.id_karyawan.toUpperCase();
-
-        // ATURAN ROLE:
-        // HANYA ID yang diawali/mengandung 'ADMIN' yang menjadi admin.
-        // Semua ID PDL-001, PDL-002, dst. dikategorikan sebagai KARYAWAN.
-        const role = idUpper.includes('ADMIN') ? 'admin' : 'karyawan';
-
-        const userData = {
-          id_karyawan: user.id_karyawan,
-          nama: user.nama,
-          role: role
-        };
-
-        // Reset session lama dan simpan session baru
+        const role = user.id_karyawan.toUpperCase().includes('ADMIN') ? 'admin' : 'karyawan';
         localStorage.clear();
-        localStorage.setItem('user_padel', JSON.stringify(userData));
-
-        if (role === 'admin') {
-          alert(`Selamat datang Admin, ${user.nama}!\nMembuka Dashboard Kelola Data Karyawan & Rekening Gaji...`);
-          window.location.href = '/admin.html'; // Admin dialihkan ke admin.html
-        } else {
-          alert(`Selamat datang, ${user.nama}!\nMembuka Halaman Absensi...`);
-          window.location.href = '/'; // Karyawan (PDL-001, dst) dialihkan ke index.html
-        }
+        localStorage.setItem('user_padel', JSON.stringify({ id_karyawan: user.id_karyawan, nama: user.nama, role }));
+        window.location.href = role === 'admin' ? '/admin.html' : '/';
       } else {
-        alert('Data Karyawan tidak ditemukan! Periksa kembali ID Karyawan atau No. HP Anda.');
+        alert('Data Karyawan tidak ditemukan!');
       }
-    } catch (err) {
-      alert('Gagal menghubungkan ke server! Pastikan server Node.js berjalan.');
-    }
+    } catch (err) { alert('Gagal menghubungkan ke server!'); }
   });
 </script>
 

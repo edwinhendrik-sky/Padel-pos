@@ -7,7 +7,7 @@
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-    .container { max-width: 1150px; margin: 0 auto; }
+    .container { max-width: 1100px; margin: 0 auto; }
     
     /* Header & Top Navigation */
     .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
@@ -23,47 +23,49 @@
     .tab-item.active { background-color: #4c84ff; color: white; }
 
     /* Card Box */
-    .card { background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; }
+    .card { background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 25px; }
     .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
     h2, h3 { margin: 0; color: #1a252f; }
 
-    /* Compact Filter */
-    .filter-container { display: flex; align-items: center; gap: 10px; background-color: #f8f9fa; padding: 10px 15px; border-radius: 8px; border: 1px solid #e9ecef; margin-bottom: 15px; flex-wrap: wrap; }
-    .filter-group { display: flex; align-items: center; gap: 6px; }
-    .filter-group label { font-size: 12px; font-weight: 600; color: #495057; }
-    .filter-group input[type="date"] { padding: 6px 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 12px; }
-    .btn-filter, .btn-reset { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; border: none; color: white; }
-    .btn-filter { background-color: #28a745; }
+    /* Filter Tanggal Absensi */
+    .filter-container { display: flex; align-items: center; gap: 12px; background-color: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-group { display: flex; align-items: center; gap: 8px; }
+    .filter-group label { font-size: 13px; font-weight: 600; color: #495057; }
+    .filter-group input[type="date"] { padding: 7px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 13px; }
+    .btn-filter { background-color: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
     .btn-filter:hover { background-color: #218838; }
-    .btn-reset { background-color: #6c757d; }
+    .btn-reset { background-color: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
     .btn-reset:hover { background-color: #5a6268; }
-    .btn-add { background-color: #4c84ff; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; font-size: 13px; }
-    .btn-add:hover { background-color: #3b71e8; }
 
-    /* Table & Parent Row Styling (Compact) */
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
-    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eeeeee; font-size: 13px; vertical-align: middle; }
-    th { background-color: #f8f9fa; color: #495057; font-weight: 700; border-bottom: 2px solid #dee2e6; }
-    
-    .parent-row { transition: background 0.2s; cursor: pointer; }
-    .parent-row:hover { background-color: #f1f5fa; }
+    .btn-add { background-color: #28a745; color: white; padding: 10px 18px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; font-size: 14px; }
+    .btn-add:hover { background-color: #218838; }
 
-    .btn-toggle { background: none; color: #4c84ff; border: none; padding: 4px; cursor: pointer; font-size: 14px; font-weight: bold; width: 24px; }
+    /* Table & Parent Row Styling */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 14px 15px; text-align: left; border-bottom: 1px solid #eeeeee; font-size: 13px; vertical-align: middle; }
+    th { background-color: #4c84ff; color: white; font-weight: 600; }
     
-    .btn-edit { background-color: #ffc107; color: #212529; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; margin-right: 4px; }
+    .parent-row { transition: background 0.2s; }
+    .parent-row:hover { background-color: #f8f9fa; }
+
+    .btn-toggle { background-color: #e9ecef; color: #495057; border: 1px solid #ced4da; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+    .btn-toggle:hover { background-color: #dee2e6; }
+    
+    .btn-edit { background-color: #ffc107; color: #212529; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; margin-right: 4px; }
     .btn-edit:hover { background-color: #e0a800; }
-    .btn-delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
+    
+    .btn-delete { background-color: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
     .btn-delete:hover { background-color: #c82333; }
 
-    /* Child Row Accordion Styling (Space Saving) */
-    .child-row { display: none; background-color: #fafbfc; }
-    .child-container { padding: 12px 15px; display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 15px; border-left: 3px solid #4c84ff; margin: 0; box-shadow: inset 0 3px 5px rgba(0,0,0,0.02); }
+    /* Child Row Accordion Styling */
+    .child-row { display: none; background-color: #f8fafd; }
+    .child-container { padding: 15px 20px; display: grid; grid-template-columns: 1fr 2fr; gap: 20px; border-left: 4px solid #4c84ff; margin: 5px 0; border-radius: 4px; background: #ffffff; box-shadow: inset 0 0 5px rgba(0,0,0,0.03); }
     @media (max-width: 768px) { .child-container { grid-template-columns: 1fr; } }
 
-    .detail-box h5 { margin: 0 0 8px 0; color: #4c84ff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e9ecef; padding-bottom: 4px; }
-    .detail-item { font-size: 12px; margin-bottom: 4px; color: #555; display: flex; justify-content: space-between; }
-    .detail-item b { color: #212529; }
-    .badge-bank { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background-color: #e2e8f0; color: #334155; }
+    .detail-box h5 { margin: 0 0 10px 0; color: #4c84ff; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed #ddd; padding-bottom: 4px; }
+    .detail-item { font-size: 13px; margin-bottom: 6px; color: #555; display: flex; justify-content: space-between; }
+    .detail-item b { color: #333; }
+    .badge-bank { padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; background-color: #e2e8f0; color: #334155; }
     .badge-hadir { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background-color: #d4edda; color: #155724; }
 
     /* Modal Form Styling */
@@ -72,29 +74,32 @@
     .close-btn { float: right; font-size: 22px; font-weight: bold; cursor: pointer; color: #aaa; }
     .close-btn:hover { color: #000; }
     
-    .form-section-title { font-size: 13px; font-weight: bold; color: #4c84ff; margin: 15px 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 4px; text-transform: uppercase; }
+    .form-section-title { font-size: 14px; font-weight: bold; color: #4c84ff; margin: 15px 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 4px; }
     .form-group { margin-bottom: 12px; }
     label { font-weight: 600; display: block; margin-bottom: 4px; font-size: 12px; color: #495057; }
-    input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+    input { width: 100%; padding: 9px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
     input[readonly] { background-color: #e9ecef; font-weight: bold; color: #495057; cursor: not-allowed; }
     input:focus { border-color: #007bff; outline: none; }
     .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
     @media (max-width: 600px) { .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; } }
 
+    /* Action Buttons in Modal */
     .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
-    .btn-cancel { flex: 1; background-color: #6c757d; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
-    .btn-submit-modal { flex: 2; background-color: #28a745; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
-    
+    .btn-cancel { flex: 1; background-color: #6c757d; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; text-align: center; }
+    .btn-cancel:hover { background-color: #5a6268; }
+    .btn-submit-modal { flex: 2; background-color: #28a745; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
+    .btn-submit-modal:hover { background-color: #218838; }
+
     .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .tab-content.active { display: block; }
   </style>
 </head>
 <body>
 
 <div class="container">
   
+  <!-- Navigation Header -->
   <div class="nav-bar">
     <div>
       <h2>Dashboard Admin Padel</h2>
@@ -105,6 +110,7 @@
     </div>
   </div>
 
+  <!-- Menu Utama Tab Navigation -->
   <div class="menu-tabs">
     <button class="tab-item active" onclick="switchTab('tab-dashboard', this)">Dashboard Master</button>
     <button class="tab-item" onclick="switchTab('tab-absensi', this)">Laporan Absensi & Periode</button>
@@ -115,21 +121,22 @@
     <div class="card">
       <div class="card-header">
         <h3>Master Data Karyawan, Rekening & Gaji</h3>
-        <button class="btn-add" onclick="bukaModalTambah()">+ Karyawan Baru</button>
+        <button class="btn-add" onclick="bukaModalTambah()">+ Tambah Data Karyawan Baru</button>
       </div>
 
       <table>
         <thead>
           <tr>
-            <th style="width: 30px;"></th>
+            <th style="width: 40px; text-align: center;">Detail</th>
             <th>ID & Nama Karyawan</th>
             <th>No. WhatsApp</th>
-            <th>Total Gaji Master</th>
-            <th style="text-align: right;">Aksi</th>
+            <th>Total Kehadiran</th>
+            <th>THP (Total Gaji)</th>
+            <th style="text-align: center;">Aksi</th>
           </tr>
         </thead>
         <tbody id="tabelMaster">
-          <tr><td colspan="5" style="text-align: center;">Memuat data...</td></tr>
+          <tr><td colspan="6" style="text-align: center;">Memuat data...</td></tr>
         </tbody>
       </table>
     </div>
@@ -139,34 +146,36 @@
   <div id="tab-absensi" class="tab-content">
     <div class="card">
       <div class="card-header">
-        <h3>Laporan Absensi Per Periode</h3>
-        <button class="btn-header" style="background-color: #17a2b8;" onclick="window.print()">Cetak PDF</button>
+        <h3>Laporan Absensi Per Periode Tanggal</h3>
+        <button class="btn-header" style="background-color: #17a2b8;" onclick="window.print()">Cetak PDF / Print</button>
       </div>
 
+      <!-- Filter Periode Absen -->
       <div class="filter-container">
         <div class="filter-group">
-          <label>Mulai:</label>
+          <label for="filterStartDate">Mulai Tanggal:</label>
           <input type="date" id="filterStartDate">
         </div>
         <div class="filter-group">
-          <label>Sampai:</label>
+          <label for="filterEndDate">Sampai Tanggal:</label>
           <input type="date" id="filterEndDate">
         </div>
-        <button class="btn-filter" onclick="terapkanFilterAbsen()">Filter</button>
-        <button class="btn-reset" onclick="resetFilterAbsen()">Reset</button>
+        <button class="btn-filter" onclick="terapkanFilterAbsen()">Tampilkan Laporan</button>
+        <button class="btn-reset" onclick="resetFilterAbsen()">Reset Filter</button>
       </div>
 
       <table>
         <thead>
           <tr>
-            <th style="width: 30px;"></th>
+            <th style="width: 40px; text-align: center;">Detail</th>
             <th>ID & Nama Karyawan</th>
-            <th>Kehadiran</th>
+            <th>No. WhatsApp</th>
+            <th>Kehadiran Periode Ini</th>
             <th>Estimasi THP Gaji</th>
           </tr>
         </thead>
         <tbody id="tabelAbsensiPeriode">
-          <tr><td colspan="4" style="text-align: center;">Memuat data absensi...</td></tr>
+          <tr><td colspan="5" style="text-align: center;">Memuat data absensi...</td></tr>
         </tbody>
       </table>
     </div>
@@ -178,16 +187,17 @@
 <div id="modalKaryawan" class="modal">
   <div class="modal-content">
     <span class="close-btn" onclick="tutupModal()">&times;</span>
-    <h3 id="modalTitle">Tambah Data Karyawan</h3>
+    <h3 id="modalTitle">Tambah Data Karyawan Baru</h3>
     
     <form id="formKaryawan" style="margin-top: 15px;">
       <input type="hidden" id="formMode" value="add">
 
+      <!-- Section 1: Data Karyawan -->
       <div class="form-section-title">1. Data Profil Karyawan</div>
       <div class="form-grid-2">
         <div class="form-group">
-          <label for="idKaryawan">ID Karyawan:</label>
-          <input type="text" id="idKaryawan" readonly>
+          <label for="idKaryawan">ID Karyawan (Otomatis):</label>
+          <input type="text" id="idKaryawan" readonly placeholder="Otomatis tergenerasi...">
         </div>
         <div class="form-group" id="groupTglJoin">
           <label for="tglJoin">Tanggal Bergabung:</label>
@@ -197,64 +207,67 @@
       <div class="form-grid-2">
         <div class="form-group">
           <label for="nama">Nama Lengkap:</label>
-          <input type="text" id="nama" required>
+          <input type="text" id="nama" placeholder="Masukkan Nama Karyawan" required>
         </div>
         <div class="form-group">
-          <label for="noHp">No. WhatsApp:</label>
-          <input type="text" id="noHp" required>
+          <label for="noHp">No. WhatsApp / HP:</label>
+          <input type="text" id="noHp" placeholder="Contoh: 08123456789" required>
         </div>
       </div>
 
+      <!-- Section 2: Data Rekening Bank -->
       <div class="form-section-title">2. Data Rekening Bank</div>
       <div class="form-grid-3">
         <div class="form-group">
           <label for="namaBank">Nama Bank:</label>
-          <input type="text" id="namaBank">
+          <input type="text" id="namaBank" placeholder="BCA / Mandiri / BRI">
         </div>
         <div class="form-group">
           <label for="noRekening">No. Rekening:</label>
-          <input type="number" id="noRekening">
+          <input type="number" id="noRekening" placeholder="8830123456">
         </div>
         <div class="form-group">
           <label for="namaPemilik">Atas Nama Pemilik:</label>
-          <input type="text" id="namaPemilik">
+          <input type="text" id="namaPemilik" placeholder="Sesuai buku tabungan">
         </div>
       </div>
 
+      <!-- Section 3: Data Komponen Gaji Lengkap -->
       <div class="form-section-title">3. Rincian Gaji & Tunjangan</div>
       <div class="form-grid-3">
         <div class="form-group">
-          <label>Gaji Pokok:</label>
+          <label for="gajiPokok">Gaji Pokok (Rp):</label>
           <input type="number" id="gajiPokok" value="0">
         </div>
         <div class="form-group">
-          <label>Tnj. Weekend:</label>
+          <label for="tunjanganWeekend">Tunjangan Weekend (Rp):</label>
           <input type="number" id="tunjanganWeekend" value="0">
         </div>
         <div class="form-group">
-          <label>Makan/Transport:</label>
+          <label for="tunjanganMakanTransport">Tnj. Makan/Transport (Rp):</label>
           <input type="number" id="tunjanganMakanTransport" value="0">
         </div>
       </div>
 
       <div class="form-grid-3">
         <div class="form-group">
-          <label>Bonus Kehadiran:</label>
+          <label for="bonusKehadiran">Bonus Kehadiran (Rp):</label>
           <input type="number" id="bonusKehadiran" value="0">
         </div>
         <div class="form-group">
-          <label>Tambahan Lain:</label>
+          <label for="tambahanLain">Tambahan Lain-Lain (Rp):</label>
           <input type="number" id="tambahanLain" value="0">
         </div>
         <div class="form-group">
-          <label style="color:#dc3545;">Potongan Lain:</label>
-          <input type="number" id="potonganLain" value="0">
+          <label for="potonganLain">Potongan Lain-Lain (Rp):</label>
+          <input type="number" id="potonganLain" value="0" style="color: #dc3545;">
         </div>
       </div>
 
+      <!-- Tombol Aksi Modal -->
       <div class="modal-actions">
         <button type="button" class="btn-cancel" onclick="tutupModal()">Batal</button>
-        <button type="submit" class="btn-submit-modal">Simpan Data</button>
+        <button type="submit" class="btn-submit-modal">Simpan Semua Data</button>
       </div>
     </form>
   </div>
@@ -264,126 +277,175 @@
   let cacheKaryawan = [];
   let cacheRiwayatAbsen = [];
 
+  // Otorisasi Admin
   function cekAksesAdmin() {
     const userSession = localStorage.getItem('user_padel');
     if (!userSession) { window.location.href = '/login.html'; return; }
+
     const user = JSON.parse(userSession);
-    if (user.role !== 'admin') { alert('Akses Ditolak!'); window.location.href = '/'; return; }
-    document.getElementById('labelWelcome').textContent = `Admin: ${user.nama} (${user.id_karyawan})`;
+    if (user.role !== 'admin') {
+      alert('Akses Ditolak! Halaman ini hanya untuk Admin.');
+      window.location.href = '/';
+      return;
+    }
+    document.getElementById('labelWelcome').textContent = `Admin Logged in: ${user.nama} (${user.id_karyawan})`;
   }
 
+  // Switch Tab Menu Utama
   function switchTab(tabId, el) {
     document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
     document.querySelectorAll('.tab-item').forEach(ti => ti.classList.remove('active'));
+
     document.getElementById(tabId).classList.add('active');
     el.classList.add('active');
   }
 
+  // Generate ID Otomatis Berurut (PDL-001, PDL-002, dst)
   function generateNextId() {
     let maxNum = 0;
     cacheKaryawan.forEach(item => {
       if (item.id_karyawan && item.id_karyawan.startsWith('PDL-')) {
         const numPart = parseInt(item.id_karyawan.replace('PDL-', ''), 10);
-        if (!isNaN(numPart) && numPart > maxNum) maxNum = numPart;
+        if (!isNaN(numPart) && numPart > maxNum) {
+          maxNum = numPart;
+        }
       }
     });
-    return `PDL-${String(maxNum + 1).padStart(3, '0')}`;
+
+    const nextNum = maxNum + 1;
+    return `PDL-${String(nextNum).padStart(3, '0')}`;
   }
 
+  // Fetch Master Data Karyawan & Riwayat Absen
   async function loadMasterData() {
     try {
-      const [resGaji, resAbsen] = await Promise.all([ fetch('/api/gaji-lengkap'), fetch('/api/riwayat') ]);
+      const resGaji = await fetch('/api/gaji-lengkap');
       cacheKaryawan = await resGaji.json();
+
+      const resAbsen = await fetch('/api/riwayat');
       cacheRiwayatAbsen = await resAbsen.json();
 
-      renderMasterTabel(cacheKaryawan);
+      renderMasterTabel(cacheKaryawan, cacheRiwayatAbsen);
       renderAbsensiPeriodeTabel(cacheKaryawan, cacheRiwayatAbsen);
-    } catch (err) { console.error("Gagal load data:", err); }
+    } catch (err) {
+      console.error("Gagal load data:", err);
+    }
   }
 
-  // --- RENDER TAB 1: MASTER DATA (Compact) ---
-  function renderMasterTabel(dataKaryawan) {
+  // Render Tabel Dashboard Master
+  function renderMasterTabel(dataKaryawan, riwayatAbsenList) {
     const tbody = document.getElementById('tabelMaster');
     tbody.innerHTML = '';
-    if (dataKaryawan.length === 0) return tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Tidak ada data.</td></tr>';
+
+    if (!dataKaryawan || dataKaryawan.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Tidak ada data karyawan.</td></tr>';
+      return;
+    }
 
     dataKaryawan.forEach((item, index) => {
       const childId = `m-child-${index}`;
-      const totalTHP = (item.gaji_pokok || 0) + (item.tunjangan_weekend || 0) + (item.tunjangan_makan_transport || 0) + (item.bonus_kehadiran || 0) + (item.tambahan_lain || 0) - (item.potongan_lain || 0);
+      const absensiUser = riwayatAbsenList.filter(a => a.nama === item.nama || a.id_karyawan === item.id_karyawan);
+      const totalHadir = absensiUser.length;
+
+      const bankBadge = item.nama_bank ? `<span class="badge-bank">${item.nama_bank}</span>` : '-';
+      const noRek = item.no_rekening || 'Belum diisi';
+      const pemilik = item.nama_pemilik || '-';
+      const noHp = item.no_hp && item.no_hp !== '-' ? item.no_hp : '-';
+
+      const gajipok = item.gaji_pokok || 0;
+      const tWeekend = item.tunjangan_weekend || 0;
+      const tMakan = item.tunjangan_makan_transport || 0;
+      const bHadir = item.bonus_kehadiran || 0;
+      const tLain = item.tambahan_lain || 0;
+      const pot = item.potongan_lain || 0;
+
+      const totalTHP = gajipok + tWeekend + tMakan + bHadir + tLain - pot;
 
       const trParent = document.createElement('tr');
       trParent.className = 'parent-row';
       trParent.innerHTML = `
-        <td style="text-align: center;" onclick="toggleChild('${childId}', this)"><button class="btn-toggle">❯</button></td>
-        <td onclick="toggleChild('${childId}', this.previousElementSibling.children[0])"><b>${item.nama}</b><br><small style="color:#666;">${item.id_karyawan}</small></td>
-        <td>${item.no_hp || '-'}</td>
+        <td style="text-align: center;">
+          <button class="btn-toggle" onclick="toggleChild('${childId}', this)">▶</button>
+        </td>
+        <td><b>${item.nama}</b><br><small style="color:#666;">ID: ${item.id_karyawan}</small></td>
+        <td>${noHp}</td>
+        <td><span class="badge-hadir">${totalHadir} Hari Hadir</span></td>
         <td><b style="color:#28a745;">Rp ${totalTHP.toLocaleString('id-ID')}</b></td>
-        <td style="text-align: right;">
+        <td style="text-align: center;">
           <button class="btn-edit" onclick="bukaModalEdit('${item.id_karyawan}')">Edit</button>
           <button class="btn-delete" onclick="hapusKaryawan('${item.id_karyawan}', '${item.nama}')">Hapus</button>
         </td>
       `;
 
-      // Compact 3-Column Child Row
       const trChild = document.createElement('tr');
       trChild.className = 'child-row';
       trChild.id = childId;
       trChild.innerHTML = `
-        <td colspan="5" style="padding: 0;">
+        <td colspan="6" style="padding: 0 15px 15px 15px;">
           <div class="child-container">
             <div class="detail-box">
-              <h5>Profil & Status</h5>
-              <div class="detail-item"><span>ID Karyawan:</span> <b>${item.id_karyawan}</b></div>
-              <div class="detail-item"><span>Tanggal Join:</span> <b>${item.tgl_join || '-'}</b></div>
+              <h5>Rincian Rekening Bank</h5>
+              <div class="detail-item"><span>Nama Bank:</span> <b>${bankBadge}</b></div>
+              <div class="detail-item"><span>No. Rekening:</span> <b>${noRek}</b></div>
+              <div class="detail-item"><span>Atas Nama:</span> <b>${pemilik}</b></div>
             </div>
             <div class="detail-box">
-              <h5>Rekening Bank</h5>
-              <div class="detail-item"><span>Bank:</span> <b>${item.nama_bank ? `<span class="badge-bank">${item.nama_bank}</span>` : '-'}</b></div>
-              <div class="detail-item"><span>No Rekening:</span> <b>${item.no_rekening || '-'}</b></div>
-              <div class="detail-item"><span>Pemilik:</span> <b>${item.nama_pemilik || '-'}</b></div>
-            </div>
-            <div class="detail-box">
-              <h5>Rincian Gaji Master</h5>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <h5>Rincian Komponen Gaji</h5>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
-                  <div class="detail-item"><span>Gaji Pokok:</span> <b>Rp ${(item.gaji_pokok||0).toLocaleString('id-ID')}</b></div>
-                  <div class="detail-item"><span>Tnj. Weekend:</span> <b>Rp ${(item.tunjangan_weekend||0).toLocaleString('id-ID')}</b></div>
-                  <div class="detail-item"><span>Tnj. Makan:</span> <b>Rp ${(item.tunjangan_makan_transport||0).toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Gaji Pokok:</span> <b>Rp ${gajipok.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Tnj. Weekend:</span> <b>Rp ${tWeekend.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Makan/Transport:</span> <b>Rp ${tMakan.toLocaleString('id-ID')}</b></div>
                 </div>
                 <div>
-                  <div class="detail-item"><span>Bonus Hadir:</span> <b>Rp ${(item.bonus_kehadiran||0).toLocaleString('id-ID')}</b></div>
-                  <div class="detail-item"><span>Tambahan:</span> <b>Rp ${(item.tambahan_lain||0).toLocaleString('id-ID')}</b></div>
-                  <div class="detail-item"><span>Potongan:</span> <b style="color:#dc3545;">-Rp ${(item.potongan_lain||0).toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Bonus Kehadiran:</span> <b>Rp ${bHadir.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Tambahan Lain:</span> <b>Rp ${tLain.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Potongan:</span> <b style="color:#dc3545;">-Rp ${pot.toLocaleString('id-ID')}</b></div>
                 </div>
               </div>
             </div>
           </div>
         </td>
       `;
+
       tbody.appendChild(trParent);
       tbody.appendChild(trChild);
     });
   }
 
-  // --- RENDER TAB 2: LAPORAN ABSENSI (Compact) ---
+  // Render Tabel Tab Laporan Absensi Per Periode
   function renderAbsensiPeriodeTabel(dataKaryawan, riwayatAbsenList) {
     const tbody = document.getElementById('tabelAbsensiPeriode');
     tbody.innerHTML = '';
-    if (dataKaryawan.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Tidak ada data.</td></tr>';
+
+    if (!dataKaryawan || dataKaryawan.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Tidak ada data.</td></tr>';
+      return;
+    }
 
     dataKaryawan.forEach((item, index) => {
       const childId = `a-child-${index}`;
       const absensiUser = riwayatAbsenList.filter(a => a.nama === item.nama || a.id_karyawan === item.id_karyawan);
       const totalHadir = absensiUser.length;
-      
-      const totalTHP = (item.gaji_pokok || 0) + (item.tunjangan_weekend || 0) + (item.tunjangan_makan_transport || 0) + (item.bonus_kehadiran || 0) + (item.tambahan_lain || 0) - (item.potongan_lain || 0);
+
+      const gajipok = item.gaji_pokok || 0;
+      const tWeekend = item.tunjangan_weekend || 0;
+      const tMakan = item.tunjangan_makan_transport || 0;
+      const bHadir = item.bonus_kehadiran || 0;
+      const tLain = item.tambahan_lain || 0;
+      const pot = item.potongan_lain || 0;
+
+      const totalTHP = gajipok + tWeekend + tMakan + bHadir + tLain - pot;
 
       const trParent = document.createElement('tr');
       trParent.className = 'parent-row';
       trParent.innerHTML = `
-        <td style="text-align: center;" onclick="toggleChild('${childId}', this)"><button class="btn-toggle">❯</button></td>
-        <td onclick="toggleChild('${childId}', this.previousElementSibling.children[0])"><b>${item.nama}</b> <small style="color:#666;">(${item.id_karyawan})</small></td>
-        <td><span class="badge-hadir">${totalHadir} Hari</span></td>
+        <td style="text-align: center;">
+          <button class="btn-toggle" onclick="toggleChild('${childId}', this)">▶</button>
+        </td>
+        <td><b>${item.nama}</b><br><small style="color:#666;">ID: ${item.id_karyawan}</small></td>
+        <td>${item.no_hp || '-'}</td>
+        <td><span class="badge-hadir">${totalHadir} Hari Hadir</span></td>
         <td><b style="color:#28a745;">Rp ${totalTHP.toLocaleString('id-ID')}</b></td>
       `;
 
@@ -391,12 +453,13 @@
       trChild.className = 'child-row';
       trChild.id = childId;
       trChild.innerHTML = `
-        <td colspan="4" style="padding: 0;">
-          <div class="child-container" style="grid-template-columns: 1fr 1fr;">
+        <td colspan="5" style="padding: 0 15px 15px 15px;">
+          <div class="child-container">
             <div class="detail-box">
               <h5>Informasi Rekening</h5>
-              <div class="detail-item"><span>Bank & Rekening:</span> <b>${item.nama_bank || '-'} - ${item.no_rekening || '-'}</b></div>
-              <div class="detail-item"><span>Atas Nama:</span> <b>${item.nama_pemilik || '-'}</b></div>
+              <div class="detail-item"><span>Bank:</span> <b>${item.nama_bank || '-'}</b></div>
+              <div class="detail-item"><span>No. Rek:</span> <b>${item.no_rekening || '-'}</b></div>
+              <div class="detail-item"><span>Pemilik:</span> <b>${item.nama_pemilik || '-'}</b></div>
             </div>
             <div class="detail-box">
               <h5>Rincian Gaji Periode Ini</h5>
@@ -406,17 +469,27 @@
           </div>
         </td>
       `;
+
       tbody.appendChild(trParent);
       tbody.appendChild(trChild);
     });
   }
 
+  // Filter Tanggal Absen di Tab 2
   function terapkanFilterAbsen() {
     const startDate = document.getElementById('filterStartDate').value;
     const endDate = document.getElementById('filterEndDate').value;
-    if (!startDate || !endDate) return alert('Pilih rentang tanggal!');
-    
-    const filteredAbsen = cacheRiwayatAbsen.filter(a => a.tanggal && a.tanggal >= startDate && a.tanggal <= endDate);
+
+    if (!startDate || !endDate) {
+      alert('Silakan pilih rentang tanggal Mulai dan Sampai Absen!');
+      return;
+    }
+
+    const filteredAbsen = cacheRiwayatAbsen.filter(a => {
+      if (!a.tanggal) return false;
+      return a.tanggal >= startDate && a.tanggal <= endDate;
+    });
+
     renderAbsensiPeriodeTabel(cacheKaryawan, filteredAbsen);
   }
 
@@ -426,23 +499,26 @@
     renderAbsensiPeriodeTabel(cacheKaryawan, cacheRiwayatAbsen);
   }
 
+  // Toggle Accordion Detail Row
   function toggleChild(childId, btn) {
     const childRow = document.getElementById(childId);
     if (childRow.style.display === 'table-row') {
       childRow.style.display = 'none';
-      btn.textContent = '❯';
+      btn.textContent = '▶';
     } else {
       childRow.style.display = 'table-row';
-      btn.textContent = '⌵';
+      btn.textContent = '▼';
     }
   }
 
-  // Modal Handlers (Tambah, Edit, Save, Delete)
+  // Modal Functions
   function bukaModalTambah() {
     document.getElementById('formKaryawan').reset();
     document.getElementById('formMode').value = 'add';
     document.getElementById('modalTitle').textContent = 'Tambah Data Karyawan Baru';
+    
     document.getElementById('idKaryawan').value = generateNextId();
+    document.getElementById('idKaryawan').readOnly = true;
     document.getElementById('groupTglJoin').style.display = 'block';
     document.getElementById('tglJoin').valueAsDate = new Date();
     document.getElementById('modalKaryawan').style.display = 'flex';
@@ -451,9 +527,11 @@
   function bukaModalEdit(id) {
     const item = cacheKaryawan.find(k => k.id_karyawan === id);
     if (!item) return;
+
     document.getElementById('formMode').value = 'edit';
     document.getElementById('modalTitle').textContent = `Edit Master Data (${id})`;
     document.getElementById('idKaryawan').value = item.id_karyawan;
+    document.getElementById('idKaryawan').readOnly = true;
     document.getElementById('nama').value = item.nama;
     document.getElementById('noHp').value = item.no_hp || '';
     document.getElementById('groupTglJoin').style.display = 'none';
@@ -461,6 +539,7 @@
     document.getElementById('namaBank').value = item.nama_bank || '';
     document.getElementById('noRekening').value = item.no_rekening || '';
     document.getElementById('namaPemilik').value = item.nama_pemilik || '';
+
     document.getElementById('gajiPokok').value = item.gaji_pokok || 0;
     document.getElementById('tunjanganWeekend').value = item.tunjangan_weekend || 0;
     document.getElementById('tunjanganMakanTransport').value = item.tunjangan_makan_transport || 0;
@@ -471,39 +550,102 @@
     document.getElementById('modalKaryawan').style.display = 'flex';
   }
 
-  function tutupModal() { document.getElementById('modalKaryawan').style.display = 'none'; }
+  function tutupModal() {
+    document.getElementById('modalKaryawan').style.display = 'none';
+  }
 
+  // Submit Handler untuk Add/Edit Data
   document.getElementById('formKaryawan').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const id = document.getElementById('idKaryawan').value;
-    const bodyKaryawan = { id_karyawan: id, nama: document.getElementById('nama').value, no_hp: document.getElementById('noHp').value, tgl_join: document.getElementById('tglJoin').value };
-    const bodyGaji = { id_karyawan: id, nama_bank: document.getElementById('namaBank').value, no_rekening: document.getElementById('noRekening').value, nama_pemilik: document.getElementById('namaPemilik').value, gaji_pokok: parseFloat(document.getElementById('gajiPokok').value)||0, tunjangan_weekend: parseFloat(document.getElementById('tunjanganWeekend').value)||0, tunjangan_makan_transport: parseFloat(document.getElementById('tunjanganMakanTransport').value)||0, bonus_kehadiran: parseFloat(document.getElementById('bonusKehadiran').value)||0, tambahan_lain: parseFloat(document.getElementById('tambahanLain').value)||0, potongan_lain: parseFloat(document.getElementById('potonganLain').value)||0 };
+
+    const mode = document.getElementById('formMode').value;
+    const id_karyawan = document.getElementById('idKaryawan').value.trim();
+    const nama = document.getElementById('nama').value.trim();
+    const no_hp = document.getElementById('noHp').value.trim();
+    const tgl_join = document.getElementById('tglJoin').value || new Date().toISOString().split('T')[0];
+
+    const nama_bank = document.getElementById('namaBank').value.trim();
+    const no_rekening = document.getElementById('noRekening').value.trim();
+    const nama_pemilik = document.getElementById('namaPemilik').value.trim();
+
+    const gaji_pokok = parseFloat(document.getElementById('gajiPokok').value) || 0;
+    const tunjangan_weekend = parseFloat(document.getElementById('tunjanganWeekend').value) || 0;
+    const tunjangan_makan_transport = parseFloat(document.getElementById('tunjanganMakanTransport').value) || 0;
+    const bonus_kehadiran = parseFloat(document.getElementById('bonusKehadiran').value) || 0;
+    const tambahan_lain = parseFloat(document.getElementById('tambahanLain').value) || 0;
+    const potongan_lain = parseFloat(document.getElementById('potonganLain').value) || 0;
 
     try {
-      if (document.getElementById('formMode').value === 'add') {
-        const res = await fetch('/api/karyawan', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(bodyKaryawan) });
-        if (!res.ok) return alert((await res.json()).error);
+      if (mode === 'add') {
+        const resAdd = await fetch('/api/karyawan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id_karyawan, nama, no_hp, tgl_join })
+        });
+        if (!resAdd.ok) {
+          const err = await resAdd.json();
+          alert(err.error);
+          return;
+        }
       } else {
-        await fetch(`/api/karyawan/${id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(bodyKaryawan) });
+        await fetch(`/api/karyawan/${id_karyawan}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nama, no_hp })
+        });
       }
-      await fetch('/api/gaji-rekening', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(bodyGaji) });
-      
+
+      await fetch('/api/gaji-rekening', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id_karyawan, 
+          nama_bank, 
+          no_rekening, 
+          nama_pemilik,
+          gaji_pokok, 
+          tunjangan_weekend, 
+          tunjangan_makan_transport, 
+          bonus_kehadiran, 
+          tambahan_lain, 
+          potongan_lain 
+        })
+      });
+
       alert('Data berhasil disimpan!');
-      tutupModal(); loadMasterData();
-    } catch (err) { alert('Gagal menyimpan data!'); }
+      tutupModal();
+      loadMasterData();
+
+    } catch (err) {
+      alert('Gagal menyimpan data!');
+    }
   });
 
+  // Hapus Data Karyawan
   async function hapusKaryawan(id, nama) {
-    if (confirm(`Hapus data ${nama} (${id})?`)) {
+    if (confirm(`Apakah Anda yakin ingin menghapus "${nama}" (${id})?`)) {
       try {
         const res = await fetch(`/api/karyawan/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        alert(result.message || result.error);
         if (res.ok) loadMasterData();
-      } catch (err) { alert('Gagal menghapus data!'); }
+      } catch (err) {
+        alert('Gagal menghapus data!');
+      }
     }
   }
 
-  function logout() { if(confirm("Logout?")) { localStorage.clear(); window.location.href = '/login.html'; } }
-  window.onload = () => { cekAksesAdmin(); loadMasterData(); };
+  function logout() {
+    if (confirm("Logout dari sesi Admin?")) {
+      localStorage.clear();
+      window.location.href = '/login.html';
+    }
+  }
+
+  window.onload = () => {
+    cekAksesAdmin();
+    loadMasterData();
+  };
 </script>
 
 </body>
