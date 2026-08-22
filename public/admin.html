@@ -202,11 +202,15 @@
   </div>
 
   <!-- TAB 2: DASHBOARD MASTER DATA -->
-  <div id="tab-dashboard" class="tab-content active">
+  <div id="tab-dashboard" class="tab-content">
     <div class="card">
       <div class="card-header">
         <h3>Master Data Karyawan, Rekening & Gaji</h3>
-        <button class="btn-add" onclick="bukaModalTambah()">+ Tambah Data Karyawan Baru</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-header" style="background-color:#17a2b8;" onclick="unduhTemplateImport()">Download Template CSV</button>
+          <button class="btn-add" onclick="bukaModalImport()">Upload Data CSV</button>
+          <button class="btn-add" onclick="bukaModalTambah()">+ Tambah Data Karyawan Baru</button>
+        </div>
       </div>
 
       <table>
@@ -266,6 +270,17 @@
     </div>
   </div>
 
+</div>
+
+<div id="modalImport" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="tutupModalImport()">&times;</span>
+    <h3>Upload Data Karyawan</h3>
+    <p style="color:#6c757d;font-size:13px;line-height:1.5;">Gunakan file CSV dari template. ID yang sudah ada akan diperbarui, sedangkan ID baru akan ditambahkan.</p>
+    <div class="form-group"><label for="fileImport">Pilih File CSV</label><input type="file" id="fileImport" accept=".csv,text/csv" onchange="previewImport(this)"></div>
+    <div id="previewImport" class="empty-state">Belum ada file dipilih.</div>
+    <div class="modal-actions"><button type="button" class="btn-cancel" onclick="tutupModalImport()">Batal</button><button type="button" id="btnSimpanImport" class="btn-submit-modal" onclick="simpanImport()" disabled>Import Data</button></div>
+  </div>
 </div>
 
 <!-- Pop-Up Modal Edit & Add Master Data -->
@@ -439,6 +454,12 @@
   function jamAbsen(nilai) {
     if (!nilai) return '-';
     return new Date(nilai).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatTanggal(strTgl) {
+    if (!strTgl) return '-';
+    const tanggal = new Date(`${strTgl}T00:00:00`);
+    return tanggal.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   function escapeHtml(nilai) {
@@ -719,6 +740,46 @@
   }
 
   // Modal Functions
+  const kolomImport = ['id_karyawan', 'nama', 'no_hp', 'tgl_join', 'nama_bank', 'no_rekening', 'nama_pemilik', 'gaji_pokok', 'tunjangan_shift', 'tunjangan_weekend', 'tunjangan_makan_transport', 'bonus_kehadiran', 'lembur_jam', 'tambahan_lain', 'potongan_lain'];
+  let dataImport = [];
+
+  function bukaModalImport() {
+    dataImport = [];
+    document.getElementById('fileImport').value = '';
+    document.getElementById('previewImport').textContent = 'Belum ada file dipilih.';
+    document.getElementById('btnSimpanImport').disabled = true;
+    document.getElementById('modalImport').style.display = 'flex';
+  }
+
+  function tutupModalImport() { document.getElementById('modalImport').style.display = 'none'; }
+
+  function parseCsv(teks) {
+    const hasil = []; let baris = []; let nilai = ''; let dalamKutipan = false;
+    for (let i = 0; i < teks.length; i++) { const karakter = teks[i]; const berikutnya = teks[i + 1]; if (karakter === '"' && dalamKutipan && berikutnya === '"') { nilai += '"'; i++; } else if (karakter === '"') dalamKutipan = !dalamKutipan; else if (karakter === ',' && !dalamKutipan) { baris.push(nilai.trim()); nilai = ''; } else if ((karakter === '\n' || karakter === '\r') && !dalamKutipan) { if (karakter === '\r' && berikutnya === '\n') i++; baris.push(nilai.trim()); if (baris.some(Boolean)) hasil.push(baris); baris = []; nilai = ''; } else nilai += karakter; }
+    baris.push(nilai.trim()); if (baris.some(Boolean)) hasil.push(baris); return hasil;
+  }
+
+  async function previewImport(input) {
+    const file = input.files[0]; if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { alert('Ukuran file maksimal 2 MB.'); input.value = ''; return; }
+    const baris = parseCsv(await file.text()); const header = baris.shift().map(kolom => kolom.toLowerCase());
+    if (!header.includes('id_karyawan') || !header.includes('nama')) { alert('CSV wajib memiliki kolom id_karyawan dan nama.'); return; }
+    dataImport = baris.map(nilaiBaris => Object.fromEntries(header.map((kolom, index) => [kolom, nilaiBaris[index] || '']))).filter(row => row.id_karyawan || row.nama);
+    document.getElementById('previewImport').textContent = `${dataImport.length} baris siap diimpor.`;
+    document.getElementById('btnSimpanImport').disabled = !dataImport.length;
+  }
+
+  async function simpanImport() {
+    if (!dataImport.length || !confirm(`Perbarui ${dataImport.length} data karyawan sekarang?`)) return;
+    const tombol = document.getElementById('btnSimpanImport'); tombol.disabled = true; tombol.textContent = 'Menyimpan...';
+    try { const response = await fetch('/api/karyawan/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: dataImport }) }); const result = await response.json(); if (!response.ok) throw new Error(result.error); alert(result.message); tutupModalImport(); loadMasterData(); } catch (error) { alert(`Impor gagal: ${error.message}`); tombol.disabled = false; tombol.textContent = 'Import Data'; }
+  }
+
+  function unduhTemplateImport() {
+    const contoh = `${kolomImport.join(',')}\nPDL-008,Contoh Nama,08123456789,2026-08-22,BCA,1234567890,Contoh Nama,1500000,0,25000,10000,300000,0,0,0\n`;
+    const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([contoh], { type: 'text/csv' })); link.download = 'template-karyawan.csv'; link.click(); URL.revokeObjectURL(link.href);
+  }
+
   function bukaModalTambah() {
     document.getElementById('formKaryawan').reset();
     document.getElementById('formMode').value = 'add';
