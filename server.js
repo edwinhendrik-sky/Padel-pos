@@ -1,22 +1,27 @@
 const express = require('express');
-const Database = require('better-sqlite3');
+const { Pool } = require('pg');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const DB_PATH = './absensi_padel.db';
 
-// Inisialisasi Database
-const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
+// Koneksi ke Supabase PostgreSQL
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 // Middleware
 app.use(bodyParser.json({ limit: '15mb' }));
 app.use(bodyParser.urlencoded({ limit: '15mb', extended: true }));
 
-// Serving Folder Statis (Folder 'public')
-app.use(express.static(path.join(__dirname, 'public')));
+const PUBLIC_DIR = fs.existsSync(path.join(__dirname, 'public')) 
+  ? path.join(__dirname, 'public') 
+  : path.join(__dirname, 'Public');
+
+app.use(express.static(PUBLIC_DIR));
 
 // Master Lokasi Padel
 const LOKASI_PADEL = {
@@ -25,22 +30,14 @@ const LOKASI_PADEL = {
     lat: -6.918133332267737,
     lng: 107.58425180908361,
     radius_meter: 50,
-    shifts: [
-      { id: "L1", nama: "Shift 1 (07:00 - 15:00)" },
-      { id: "L2", nama: "Shift 2 (14:00 - 22:00)" },
-      { id: "L3", nama: "Shift 3 (Custom)" }
-    ]
+    shifts: ["Shift 1 (07:00 - 15:00)", "Shift 2 (14:00 - 22:00)", "Shift Custom"]
   },
   "boss_mengger": {
     nama: "Padel Boss Mengger",
     lat: -6.966117949983328,
     lng: 107.62140225511331,
     radius_meter: 50,
-    shifts: [
-      { id: "M1", nama: "Shift 1 (08:00 - 16:00)" },
-      { id: "M2", nama: "Shift 2 (13:00 - 23:00)" },
-      { id: "M3", nama: "Shift 3 (Custom)" }
-    ]
+    shifts: ["Shift 1 (08:00 - 16:00)", "Shift 2 (13:00 - 23:00)", "Shift Custom"]
   }
 };
 
@@ -52,164 +49,72 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
   const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
             Math.cos(lat1 * rad) * Math.cos(lat2 * rad) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
-// Inisialisasi Skema Tabel Database (Sinkron)
-db.exec(`
-  CREATE TABLE IF NOT EXISTS karyawan (
-    id_karyawan TEXT PRIMARY KEY,
-    nama TEXT NOT NULL,
-    no_hp TEXT NOT NULL,
-    tgl_join DATE NOT NULL
-  );
+// Inisialisasi Tabel Supabase
+async function initDB() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS karyawan (
+        id_karyawan VARCHAR(50) PRIMARY KEY,
+        nama VARCHAR(100) NOT NULL,
+        no_hp VARCHAR(30) NOT NULL,
+        tgl_join DATE NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS absensi (
+        id SERIAL PRIMARY KEY,
+        id_karyawan VARCHAR(50) NOT NULL,
+        kode_lokasi VARCHAR(50),
+        lokasi VARCHAR(100),
+        shift VARCHAR(50),
+        clock_in TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        foto_in TEXT,
+        clock_out TIMESTAMP,
+        foto_out TEXT,
+        tanggal DATE NOT NULL,
+        waktu VARCHAR(20)
+      );
+    `);
 
-  CREATE TABLE IF NOT EXISTS rekening_karyawan (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_karyawan TEXT UNIQUE NOT NULL,
-    nama_bank TEXT NOT NULL,
-    no_rekening TEXT NOT NULL,
-    nama_pemilik TEXT NOT NULL,
-    FOREIGN KEY (id_karyawan) REFERENCES karyawan (id_karyawan) ON DELETE CASCADE
-  );
+    // Seed Data Karyawan
+    await pool.query(`
+      INSERT INTO karyawan (id_karyawan, nama, no_hp, tgl_join) 
+      VALUES ('ADMIN', 'Admin', '081111111111', '2026-01-01'),
+             ('PDL-001', 'Nazwa Verylta', '08813099162', '2026-01-15')
+      ON CONFLICT (id_karyawan) DO NOTHING;
+    `);
 
-  CREATE TABLE IF NOT EXISTS komponen_gaji (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_karyawan TEXT UNIQUE NOT NULL,
-    gaji_pokok REAL NOT NULL DEFAULT 0,
-    tunjangan_shift REAL NOT NULL DEFAULT 0,
-    tunjangan_weekend REAL NOT NULL DEFAULT 25000,
-    tunjangan_makan_transport REAL NOT NULL DEFAULT 0,
-    bonus_kehadiran REAL NOT NULL DEFAULT 0,
-    lembur_jam REAL NOT NULL DEFAULT 0,
-    tambahan_lain REAL NOT NULL DEFAULT 0,
-    potongan_lain REAL NOT NULL DEFAULT 0,
-    FOREIGN KEY (id_karyawan) REFERENCES karyawan (id_karyawan) ON DELETE CASCADE
-  );
+    console.log("Database Supabase Terkoneksi!");
+  } catch (err) {
+    console.error("Gagal koneksi Supabase:", err);
+  }
+}
 
-  CREATE TABLE IF NOT EXISTS absensi (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_karyawan TEXT NOT NULL,
-    kode_lokasi TEXT,
-    lokasi TEXT,
-    shift TEXT,
-    clock_in DATETIME,
-    foto_in TEXT,
-    clock_out DATETIME,
-    foto_out TEXT,
-    tanggal DATE NOT NULL,
-    waktu TIME,
-    FOREIGN KEY (id_karyawan) REFERENCES karyawan (id_karyawan)
-  );
-`);
+initDB();
 
-// Auto-seed Data Admin & Karyawan PDL-001
-const stmtKaryawan = db.prepare(`INSERT OR REPLACE INTO karyawan (id_karyawan, nama, no_hp, tgl_join) VALUES (?, ?, ?, ?)`);
-stmtKaryawan.run('ADMIN', 'Admin', '081111111111', '2026-01-01');
-stmtKaryawan.run('PDL-001', 'Nazwa Verylta', '08813099162', '2026-01-15');
-
-db.prepare(`INSERT OR IGNORE INTO komponen_gaji (id_karyawan, gaji_pokok, tunjangan_shift, tunjangan_weekend, tunjangan_makan_transport, bonus_kehadiran, lembur_jam, tambahan_lain, potongan_lain) 
-        VALUES ('PDL-001', 1500000, 0, 25000, 10000, 300000, 0, 0, 0)`).run();
-
-db.prepare(`INSERT OR IGNORE INTO rekening_karyawan (id_karyawan, nama_bank, no_rekening, nama_pemilik) 
-        VALUES ('PDL-001', 'Seabank', '901153058318', 'Nazwa Verylta')`).run();
-
-// =========================================================================
-// === RUTE HALAMAN UTAMA (FIX CANNOT GET /) ================================
-// =========================================================================
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// =========================================================================
-// === ENDPOINTS API =======================================================
-// =========================================================================
-
+// Endpoints API
 app.get('/api/lokasi', (req, res) => res.json(LOKASI_PADEL));
 
-app.get('/api/karyawan', (req, res) => {
+app.get('/api/karyawan', async (req, res) => {
   try {
-    const rows = db.prepare('SELECT * FROM karyawan ORDER BY id_karyawan ASC').all();
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    const result = await pool.query('SELECT * FROM karyawan ORDER BY id_karyawan ASC');
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/karyawan', (req, res) => {
+app.post('/api/karyawan', async (req, res) => {
   const { id_karyawan, nama, no_hp, tgl_join } = req.body;
-  if (!id_karyawan || !nama) return res.status(400).json({ error: 'ID dan Nama Karyawan wajib diisi!' });
-
   try {
-    const stmt = db.prepare('INSERT OR REPLACE INTO karyawan (id_karyawan, nama, no_hp, tgl_join) VALUES (?, ?, ?, ?)');
-    stmt.run(id_karyawan, nama, no_hp || '-', tgl_join || new Date().toISOString().split('T')[0]);
-    res.json({ message: 'Karyawan berhasil ditambahkan!' });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+    await pool.query(`
+      INSERT INTO karyawan (id_karyawan, nama, no_hp, tgl_join) VALUES ($1, $2, $3, $4)
+      ON CONFLICT (id_karyawan) DO UPDATE SET nama = $2, no_hp = $3;
+    `, [id_karyawan, nama, no_hp || '-', tgl_join || new Date().toISOString().split('T')[0]]);
+    res.json({ message: 'Data karyawan tersimpan!' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/karyawan/:id', (req, res) => {
-  const { nama, no_hp } = req.body;
-  try {
-    const stmt = db.prepare('UPDATE karyawan SET nama = ?, no_hp = ? WHERE id_karyawan = ?');
-    stmt.run(nama, no_hp, req.params.id);
-    res.json({ message: 'Data karyawan diperbarui!' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete('/api/karyawan/:id', (req, res) => {
-  try {
-    const stmt = db.prepare('DELETE FROM karyawan WHERE id_karyawan = ?');
-    stmt.run(req.params.id);
-    res.json({ message: 'Karyawan dihapus!' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/gaji-lengkap', (req, res) => {
-  try {
-    const sql = `
-      SELECT k.id_karyawan, k.nama, k.no_hp, k.tgl_join, 
-             r.nama_bank, r.no_rekening, r.nama_pemilik, 
-             g.gaji_pokok, g.tunjangan_shift, g.tunjangan_weekend, 
-             g.tunjangan_makan_transport, g.bonus_kehadiran, g.lembur_jam, g.tambahan_lain, g.potongan_lain
-      FROM karyawan k
-      LEFT JOIN rekening_karyawan r ON k.id_karyawan = r.id_karyawan
-      LEFT JOIN komponen_gaji g ON k.id_karyawan = g.id_karyawan
-      ORDER BY k.id_karyawan ASC`;
-    const rows = db.prepare(sql).all();
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/gaji-rekening', (req, res) => {
-  const { id_karyawan, nama_bank, no_rekening, nama_pemilik, gaji_pokok, tunjangan_shift, tunjangan_weekend, tunjangan_makan_transport, bonus_kehadiran, lembur_jam, tambahan_lain, potongan_lain } = req.body;
-
-  try {
-    const queryRek = `INSERT INTO rekening_karyawan (id_karyawan, nama_bank, no_rekening, nama_pemilik) VALUES (?, ?, ?, ?)
-      ON CONFLICT(id_karyawan) DO UPDATE SET nama_bank=excluded.nama_bank, no_rekening=excluded.no_rekening, nama_pemilik=excluded.nama_pemilik`;
-    
-    const queryGaji = `INSERT INTO komponen_gaji (id_karyawan, gaji_pokok, tunjangan_shift, tunjangan_weekend, tunjangan_makan_transport, bonus_kehadiran, lembur_jam, tambahan_lain, potongan_lain) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id_karyawan) DO UPDATE SET gaji_pokok=excluded.gaji_pokok, tunjangan_shift=excluded.tunjangan_shift, tunjangan_weekend=excluded.tunjangan_weekend, tunjangan_makan_transport=excluded.tunjangan_makan_transport, bonus_kehadiran=excluded.bonus_kehadiran, lembur_jam=excluded.lembur_jam, tambahan_lain=excluded.tambahan_lain, potongan_lain=excluded.potongan_lain`;
-
-    db.prepare(queryRek).run(id_karyawan, nama_bank || "", no_rekening || "", nama_pemilik || "");
-    db.prepare(queryGaji).run(id_karyawan, parseFloat(gaji_pokok)||0, parseFloat(tunjangan_shift)||0, parseFloat(tunjangan_weekend)||25000, parseFloat(tunjangan_makan_transport)||0, parseFloat(bonus_kehadiran)||0, parseFloat(lembur_jam)||0, parseFloat(tambahan_lain)||0, parseFloat(potongan_lain)||0);
-
-    res.json({ message: 'Data gaji berhasil disimpan!' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/clock-in', (req, res) => {
+app.post('/api/clock-in', async (req, res) => {
   const { id_karyawan, kode_lokasi, shift, user_lat, user_lng, foto } = req.body;
   const targetLokasi = LOKASI_PADEL[kode_lokasi || 'del_luna'];
 
@@ -224,60 +129,42 @@ app.post('/api/clock-in', (req, res) => {
   const timeNow = new Date().toLocaleTimeString('id-ID');
 
   try {
-    const row = db.prepare('SELECT * FROM absensi WHERE id_karyawan = ? AND tanggal = ? AND clock_out IS NULL').get(id_karyawan, today);
-    if (row) return res.status(400).json({ error: 'Anda sudah Check-In hari ini!' });
+    const check = await pool.query('SELECT * FROM absensi WHERE id_karyawan = $1 AND tanggal = $2 AND clock_out IS NULL', [id_karyawan, today]);
+    if (check.rows.length > 0) return res.status(400).json({ error: 'Anda sudah Check-In hari ini!' });
 
-    const stmt = db.prepare(`INSERT INTO absensi (id_karyawan, kode_lokasi, lokasi, shift, clock_in, foto_in, tanggal, waktu) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)`);
-    stmt.run(id_karyawan, kode_lokasi, targetLokasi.nama, shift || 'Shift 1', foto || '', today, timeNow);
+    await pool.query(`
+      INSERT INTO absensi (id_karyawan, kode_lokasi, lokasi, shift, foto_in, tanggal, waktu) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `, [id_karyawan, kode_lokasi, targetLokasi.nama, shift || 'Shift 1', foto || '', today, timeNow]);
 
     res.json({ message: 'Check-In Berhasil!' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/clock-out', (req, res) => {
+app.post('/api/clock-out', async (req, res) => {
   const { id_karyawan, foto } = req.body;
   const today = new Date().toISOString().split('T')[0];
 
   try {
-    const row = db.prepare('SELECT * FROM absensi WHERE id_karyawan = ? AND tanggal = ? AND clock_out IS NULL').get(id_karyawan, today);
-    if (!row) return res.status(400).json({ error: 'Tidak ada sesi Check-In aktif hari ini!' });
+    const check = await pool.query('SELECT * FROM absensi WHERE id_karyawan = $1 AND tanggal = $2 AND clock_out IS NULL', [id_karyawan, today]);
+    if (check.rows.length === 0) return res.status(400).json({ error: 'Tidak ada sesi Check-In aktif hari ini!' });
 
-    const stmt = db.prepare('UPDATE absensi SET clock_out = CURRENT_TIMESTAMP, foto_out = ? WHERE id = ?');
-    stmt.run(foto || '', row.id);
-
+    await pool.query('UPDATE absensi SET clock_out = CURRENT_TIMESTAMP, foto_out = $1 WHERE id = $2', [foto || '', check.rows[0].id]);
     res.json({ message: 'Clock Out Berhasil!' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.get('/api/riwayat', (req, res) => {
+app.get('/api/riwayat', async (req, res) => {
   try {
-    const sql = `SELECT a.id, a.id_karyawan, k.nama, a.lokasi, a.shift, a.clock_in, a.foto_in, a.clock_out, a.foto_out, a.tanggal, a.waktu FROM absensi a JOIN karyawan k ON a.id_karyawan = k.id_karyawan ORDER BY a.id DESC`;
-    const rows = db.prepare(sql).all();
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    const result = await pool.query(`
+      SELECT a.id, a.id_karyawan, k.nama, a.lokasi, a.shift, a.clock_in, a.foto_in, a.clock_out, a.foto_out, a.tanggal, a.waktu 
+      FROM absensi a JOIN karyawan k ON a.id_karyawan = k.id_karyawan ORDER BY a.id DESC
+    `);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/admin/reset-database', (req, res) => {
-  try {
-    db.prepare(`DELETE FROM absensi`).run();
-    db.prepare(`DELETE FROM komponen_gaji`).run();
-    db.prepare(`DELETE FROM rekening_karyawan`).run();
-    db.prepare(`DELETE FROM karyawan WHERE id_karyawan != 'ADMIN'`).run();
-    res.json({ message: 'Database berhasil dikosongkan!' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Fallback untuk rute halaman yang tidak terdaftar.
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+app.use((req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 
 app.listen(PORT, '0.0.0.0', () => console.log(`Server Absensi Padel berjalan pada port ${PORT}`));
