@@ -93,6 +93,36 @@
 
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+
+    /* Dashboard Pemantauan Harian */
+    .daily-toolbar { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    .daily-toolbar .filter-group { flex-direction: column; align-items: flex-start; gap: 5px; }
+    .daily-toolbar input, .daily-toolbar select { min-width: 155px; padding: 9px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 13px; background: white; }
+    .btn-refresh { background-color: #4c84ff; color: white; border: none; padding: 9px 15px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    .btn-refresh:hover { background-color: #336ee8; }
+    .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+    .metric-card { background: #fff; padding: 18px; border-radius: 10px; border-left: 4px solid #4c84ff; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .metric-card:nth-child(2) { border-color: #28a745; }
+    .metric-card:nth-child(3) { border-color: #ffc107; }
+    .metric-card:nth-child(4) { border-color: #dc3545; }
+    .metric-label { color: #6c757d; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+    .metric-value { display: block; margin-top: 5px; color: #1a252f; font-size: 28px; font-weight: 700; }
+    .daily-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 25px; align-items: start; }
+    .daily-table-wrap { overflow-x: auto; }
+    .status-badge { display: inline-block; padding: 5px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .status-hadir { background: #d4edda; color: #155724; }
+    .status-belum { background: #fff3cd; color: #856404; }
+    .status-proses { background: #d1ecf1; color: #0c5460; }
+    .activity-list { list-style: none; padding: 0; margin: 0; }
+    .activity-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eeeeee; }
+    .activity-item:last-child { border-bottom: 0; }
+    .activity-dot { flex: 0 0 9px; width: 9px; height: 9px; margin-top: 5px; border-radius: 50%; background: #28a745; }
+    .activity-main { min-width: 0; font-size: 13px; }
+    .activity-main strong { display: block; color: #1a252f; }
+    .activity-meta { color: #6c757d; font-size: 12px; margin-top: 3px; }
+    .empty-state { color: #6c757d; text-align: center; padding: 22px 10px; font-size: 13px; }
+    @media (max-width: 900px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } .daily-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 500px) { .metric-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .metric-card { padding: 14px; } .metric-value { font-size: 23px; } }
   </style>
 </head>
 <body>
@@ -112,11 +142,66 @@
 
   <!-- Menu Utama Tab Navigation -->
   <div class="menu-tabs">
-    <button class="tab-item active" onclick="switchTab('tab-dashboard', this)">Dashboard Master</button>
+    <button class="tab-item active" onclick="switchTab('tab-harian', this)">Pantauan Harian</button>
+    <button class="tab-item" onclick="switchTab('tab-dashboard', this)">Master Data</button>
     <button class="tab-item" onclick="switchTab('tab-absensi', this)">Laporan Absensi & Periode</button>
   </div>
 
-  <!-- TAB 1: DASHBOARD MASTER DATA -->
+  <!-- TAB 1: PEMANTAUAN ABSENSI HARIAN -->
+  <div id="tab-harian" class="tab-content active">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h3>Pantauan Absensi Harian</h3>
+          <small id="dailySubtitle" style="color:#6c757d;">Ringkasan kehadiran karyawan hari ini</small>
+        </div>
+        <button class="btn-refresh" onclick="muatDashboardHarian()">Refresh Data</button>
+      </div>
+      <div class="daily-toolbar">
+        <div class="filter-group">
+          <label for="dailyDate">Tanggal Pantauan</label>
+          <input type="date" id="dailyDate" onchange="renderDashboardHarian()">
+        </div>
+        <div class="filter-group">
+          <label for="dailyStatus">Status</label>
+          <select id="dailyStatus" onchange="renderDashboardHarian()">
+            <option value="semua">Semua Status</option>
+            <option value="hadir">Sudah Absen</option>
+            <option value="proses">Belum Check-out</option>
+            <option value="belum">Belum Absen</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="dailySearch">Cari Karyawan</label>
+          <input type="search" id="dailySearch" placeholder="Nama atau ID" oninput="renderDashboardHarian()">
+        </div>
+      </div>
+      <div class="metric-grid">
+        <div class="metric-card"><span class="metric-label">Total Karyawan</span><strong class="metric-value" id="metricTotal">0</strong></div>
+        <div class="metric-card"><span class="metric-label">Sudah Absen</span><strong class="metric-value" id="metricHadir">0</strong></div>
+        <div class="metric-card"><span class="metric-label">Belum Check-out</span><strong class="metric-value" id="metricProses">0</strong></div>
+        <div class="metric-card"><span class="metric-label">Belum Absen</span><strong class="metric-value" id="metricBelum">0</strong></div>
+      </div>
+      <div class="daily-table-wrap">
+        <table>
+          <thead><tr><th>Karyawan</th><th>Status</th><th>Check-in</th><th>Check-out</th><th>Lokasi / Shift</th></tr></thead>
+          <tbody id="tabelHarian"><tr><td colspan="5" class="empty-state">Memuat data pantauan...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="daily-layout">
+      <div class="card">
+        <div class="card-header"><h3>Aktivitas Terbaru</h3><small id="activityCount" style="color:#6c757d;"></small></div>
+        <ul class="activity-list" id="activityList"><li class="empty-state">Belum ada aktivitas pada tanggal ini.</li></ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Catatan Pantauan</h3></div>
+        <p style="margin:0; color:#6c757d; font-size:13px; line-height:1.6;">Status <b>Belum Check-out</b> menandakan karyawan sudah masuk namun sesi kerjanya masih aktif. Gunakan tombol refresh untuk melihat absensi terbaru.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: DASHBOARD MASTER DATA -->
   <div id="tab-dashboard" class="tab-content active">
     <div class="card">
       <div class="card-header">
@@ -338,9 +423,88 @@
 
       renderMasterTabel(cacheKaryawan, cacheRiwayatAbsen);
       renderAbsensiPeriodeTabel(cacheKaryawan, cacheRiwayatAbsen);
+      document.getElementById('dailyDate').value = tanggalLokalHariIni();
+      renderDashboardHarian();
     } catch (err) {
       console.error("Gagal load data:", err);
     }
+  }
+
+  function tanggalLokalHariIni() {
+    const sekarang = new Date();
+    const offset = sekarang.getTimezoneOffset() * 60000;
+    return new Date(sekarang.getTime() - offset).toISOString().split('T')[0];
+  }
+
+  function jamAbsen(nilai) {
+    if (!nilai) return '-';
+    return new Date(nilai).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function escapeHtml(nilai) {
+    return String(nilai ?? '').replace(/[&<>"']/g, karakter => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[karakter]));
+  }
+
+  async function muatDashboardHarian() {
+    const tombol = document.querySelector('.btn-refresh');
+    tombol.disabled = true;
+    tombol.textContent = 'Memuat...';
+    try {
+      const [resKaryawan, resAbsen] = await Promise.all([fetch('/api/gaji-lengkap'), fetch('/api/riwayat')]);
+      if (!resKaryawan.ok || !resAbsen.ok) throw new Error('Gagal memuat data');
+      cacheKaryawan = await resKaryawan.json();
+      cacheRiwayatAbsen = await resAbsen.json();
+      renderMasterTabel(cacheKaryawan, cacheRiwayatAbsen);
+      renderAbsensiPeriodeTabel(cacheKaryawan, cacheRiwayatAbsen);
+      renderDashboardHarian();
+    } catch (err) {
+      document.getElementById('tabelHarian').innerHTML = '<tr><td colspan="5" class="empty-state">Data gagal dimuat. Coba refresh kembali.</td></tr>';
+    } finally {
+      tombol.disabled = false;
+      tombol.textContent = 'Refresh Data';
+    }
+  }
+
+  function renderDashboardHarian() {
+    const tanggal = document.getElementById('dailyDate').value || tanggalLokalHariIni();
+    const statusFilter = document.getElementById('dailyStatus').value;
+    const kataKunci = document.getElementById('dailySearch').value.trim().toLowerCase();
+    const karyawan = cacheKaryawan.filter(item => item.id_karyawan !== 'ADMIN');
+    const harian = cacheRiwayatAbsen.filter(item => item.tanggal === tanggal);
+    const byKaryawan = new Map();
+
+    harian.forEach(item => {
+      if (!byKaryawan.has(item.id_karyawan)) byKaryawan.set(item.id_karyawan, item);
+    });
+
+    const baris = karyawan.map(item => {
+      const absen = byKaryawan.get(item.id_karyawan);
+      const status = !absen ? 'belum' : (absen.clock_out ? 'hadir' : 'proses');
+      return { item, absen, status };
+    });
+    const jumlahHadir = baris.filter(barisItem => barisItem.status !== 'belum').length;
+    const jumlahProses = baris.filter(barisItem => barisItem.status === 'proses').length;
+    document.getElementById('metricTotal').textContent = karyawan.length;
+    document.getElementById('metricHadir').textContent = jumlahHadir;
+    document.getElementById('metricProses').textContent = jumlahProses;
+    document.getElementById('metricBelum').textContent = karyawan.length - jumlahHadir;
+    document.getElementById('dailySubtitle').textContent = `Ringkasan kehadiran untuk ${formatTanggal(tanggal)}`;
+
+    const barisTampil = baris.filter(({ item, status }) => {
+      const cocokStatus = statusFilter === 'semua' || status === statusFilter;
+      const cocokKata = !kataKunci || `${item.nama} ${item.id_karyawan}`.toLowerCase().includes(kataKunci);
+      return cocokStatus && cocokKata;
+    });
+    const tbody = document.getElementById('tabelHarian');
+    tbody.innerHTML = barisTampil.length ? barisTampil.map(({ item, absen, status }) => {
+      const labelStatus = status === 'belum' ? 'Belum Absen' : status === 'proses' ? 'Belum Check-out' : 'Selesai';
+      const kelasStatus = `status-${status}`;
+      return `<tr><td><b>${escapeHtml(item.nama)}</b><br><small style="color:#666;">${escapeHtml(item.id_karyawan)}</small></td><td><span class="status-badge ${kelasStatus}">${labelStatus}</span></td><td>${jamAbsen(absen?.clock_in)}</td><td>${jamAbsen(absen?.clock_out)}</td><td>${absen ? `${escapeHtml(absen.lokasi || '-')}<br><small>${escapeHtml(absen.shift || '-')}</small>` : '-'}</td></tr>`;
+    }).join('') : '<tr><td colspan="5" class="empty-state">Tidak ada karyawan yang cocok dengan filter.</td></tr>';
+
+    const aktivitas = harian.slice(0, 8);
+    document.getElementById('activityCount').textContent = `${aktivitas.length} aktivitas`;
+    document.getElementById('activityList').innerHTML = aktivitas.length ? aktivitas.map(item => `<li class="activity-item"><span class="activity-dot"></span><div class="activity-main"><strong>${escapeHtml(item.nama)} melakukan check-in</strong><div class="activity-meta">${jamAbsen(item.clock_in)} · ${escapeHtml(item.lokasi || 'Lokasi tidak tercatat')} · ${escapeHtml(item.shift || '-')}</div></div></li>`).join('') : '<li class="empty-state">Belum ada aktivitas pada tanggal ini.</li>';
   }
 
   // Fungsi kalkulasi THP Dinamis
