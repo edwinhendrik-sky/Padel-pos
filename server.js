@@ -24,7 +24,7 @@ const LOKASI_PADEL = {
     nama: "Padel Del Luna",
     lat: -6.918133332267737,
     lng: 107.58425180908361,
-    radius_meter: 10,
+    radius_meter: 50,
     shifts: [
       { id: "L1", nama: "Shift 1 (07:00 - 15:00)" },
       { id: "L2", nama: "Shift 2 (14:00 - 22:00)" },
@@ -35,7 +35,7 @@ const LOKASI_PADEL = {
     nama: "Padel Boss Mengger",
     lat: -6.966117949983328,
     lng: 107.62140225511331,
-    radius_meter: 10,
+    radius_meter: 50,
     shifts: [
       { id: "M1", nama: "Shift 1 (08:00 - 16:00)" },
       { id: "M2", nama: "Shift 2 (13:00 - 23:00)" },
@@ -275,8 +275,8 @@ app.post('/api/admin/reset-database', (req, res) => {
   }
 });
 
-// Fallback Route untuk Express v5 (Mengarahkan rute yang tak terdaftar ke index.html)
-app.get('/*', (req, res) => {
+// Fallback untuk rute halaman yang tidak terdaftar.
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
