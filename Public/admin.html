@@ -240,8 +240,8 @@
           <input type="number" id="gajiPokok" value="0">
         </div>
         <div class="form-group">
-          <label for="tunjanganWeekend">Tunjangan Weekend (Rp):</label>
-          <input type="number" id="tunjanganWeekend" value="0">
+          <label for="tunjanganWeekend">Tnj. Weekend (Per Hari):</label>
+          <input type="number" id="tunjanganWeekend" value="25000">
         </div>
         <div class="form-group">
           <label for="tunjanganMakanTransport">Tnj. Makan/Transport (Rp):</label>
@@ -251,13 +251,20 @@
 
       <div class="form-grid-3">
         <div class="form-group">
-          <label for="bonusKehadiran">Bonus Kehadiran (Rp):</label>
+          <label for="bonusKehadiran">Bonus Kehadiran Full (Rp):</label>
           <input type="number" id="bonusKehadiran" value="0">
+        </div>
+        <div class="form-group">
+          <label for="lemburJam">Lembur (Jam):</label>
+          <input type="number" id="lemburJam" value="0" placeholder="Jam lembur">
         </div>
         <div class="form-group">
           <label for="tambahanLain">Tambahan Lain-Lain (Rp):</label>
           <input type="number" id="tambahanLain" value="0">
         </div>
+      </div>
+
+      <div class="form-grid-2">
         <div class="form-group">
           <label for="potonganLain">Potongan Lain-Lain (Rp):</label>
           <input type="number" id="potonganLain" value="0" style="color: #dc3545;">
@@ -276,6 +283,10 @@
 <script>
   let cacheKaryawan = [];
   let cacheRiwayatAbsen = [];
+
+  const TARIF_WEEKEND = 25000;
+  const TARIF_LEMBUR = 10000;
+  const STANDAR_FULL = 26; // Standard hari kerja 1 bulan
 
   // Otorisasi Admin
   function cekAksesAdmin() {
@@ -332,6 +343,52 @@
     }
   }
 
+  // Fungsi kalkulasi THP Dinamis
+  function hitungTHPDinamis(item, absensiUser) {
+    const totalHadir = absensiUser.length;
+
+    // Hitung Hari Weekend Hadir (Sabtu & Minggu)
+    let hariWeekendHadir = 0;
+    absensiUser.forEach(a => {
+      if (a.tanggal) {
+        const day = new Date(a.tanggal).getDay();
+        if (day === 0 || day === 6) hariWeekendHadir++;
+      }
+    });
+
+    // 1. Gaji Pokok (Proporsional jika kurang dari standar full)
+    const gajiPokok = item.gaji_pokok || 0;
+    const gajiPokokDiterima = totalHadir >= STANDAR_FULL ? gajiPokok : (gajiPokok / STANDAR_FULL) * totalHadir;
+
+    // 2. Tunjangan Weekend (Rp 25.000 x Jumlah hari Sabtu/Minggu hadir)
+    const totalWeekendNominal = hariWeekendHadir * TARIF_WEEKEND;
+
+    // 3. Lembur (Rp 10.000 x Jam Lembur)
+    const jamLembur = item.lembur_jam || 0;
+    const totalLemburNominal = jamLembur * TARIF_LEMBUR;
+
+    // 4. Bonus Kehadiran Full (Hanya jika masuk >= STANDAR_FULL)
+    const isFull = totalHadir >= STANDAR_FULL;
+    const bonusKehadiranDiterima = isFull ? (item.bonus_kehadiran || 0) : 0;
+
+    const tMakan = item.tunjangan_makan_transport || 0;
+    const tLain = item.tambahan_lain || 0;
+    const pot = item.potongan_lain || 0;
+
+    const totalTHP = gajiPokokDiterima + totalWeekendNominal + totalLemburNominal + bonusKehadiranDiterima + tMakan + tLain - pot;
+
+    return {
+      totalHadir,
+      hariWeekendHadir,
+      totalWeekendNominal,
+      jamLembur,
+      totalLemburNominal,
+      bonusKehadiranDiterima,
+      gajiPokokDiterima,
+      totalTHP: Math.round(totalTHP)
+    };
+  }
+
   // Render Tabel Dashboard Master
   function renderMasterTabel(dataKaryawan, riwayatAbsenList) {
     const tbody = document.getElementById('tabelMaster');
@@ -345,21 +402,13 @@
     dataKaryawan.forEach((item, index) => {
       const childId = `m-child-${index}`;
       const absensiUser = riwayatAbsenList.filter(a => a.nama === item.nama || a.id_karyawan === item.id_karyawan);
-      const totalHadir = absensiUser.length;
+      
+      const calc = hitungTHPDinamis(item, absensiUser);
 
       const bankBadge = item.nama_bank ? `<span class="badge-bank">${item.nama_bank}</span>` : '-';
       const noRek = item.no_rekening || 'Belum diisi';
       const pemilik = item.nama_pemilik || '-';
       const noHp = item.no_hp && item.no_hp !== '-' ? item.no_hp : '-';
-
-      const gajipok = item.gaji_pokok || 0;
-      const tWeekend = item.tunjangan_weekend || 0;
-      const tMakan = item.tunjangan_makan_transport || 0;
-      const bHadir = item.bonus_kehadiran || 0;
-      const tLain = item.tambahan_lain || 0;
-      const pot = item.potongan_lain || 0;
-
-      const totalTHP = gajipok + tWeekend + tMakan + bHadir + tLain - pot;
 
       const trParent = document.createElement('tr');
       trParent.className = 'parent-row';
@@ -369,8 +418,8 @@
         </td>
         <td><b>${item.nama}</b><br><small style="color:#666;">ID: ${item.id_karyawan}</small></td>
         <td>${noHp}</td>
-        <td><span class="badge-hadir">${totalHadir} Hari Hadir</span></td>
-        <td><b style="color:#28a745;">Rp ${totalTHP.toLocaleString('id-ID')}</b></td>
+        <td><span class="badge-hadir">${calc.totalHadir} Hari Hadir</span></td>
+        <td><b style="color:#28a745;">Rp ${calc.totalTHP.toLocaleString('id-ID')}</b></td>
         <td style="text-align: center;">
           <button class="btn-edit" onclick="bukaModalEdit('${item.id_karyawan}')">Edit</button>
           <button class="btn-delete" onclick="hapusKaryawan('${item.id_karyawan}', '${item.nama}')">Hapus</button>
@@ -390,17 +439,18 @@
               <div class="detail-item"><span>Atas Nama:</span> <b>${pemilik}</b></div>
             </div>
             <div class="detail-box">
-              <h5>Rincian Komponen Gaji</h5>
+              <h5>Rincian Komponen Gaji Diterima</h5>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
-                  <div class="detail-item"><span>Gaji Pokok:</span> <b>Rp ${gajipok.toLocaleString('id-ID')}</b></div>
-                  <div class="detail-item"><span>Tnj. Weekend:</span> <b>Rp ${tWeekend.toLocaleString('id-ID')}</b></div>
-                  <div class="detail-item"><span>Makan/Transport:</span> <b>Rp ${tMakan.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Gaji Pokok:</span> <b>Rp ${Math.round(calc.gajiPokokDiterima).toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Tnj. Weekend (${calc.hariWeekendHadir}x):</span> <b>Rp ${calc.totalWeekendNominal.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Uang Lembur (${calc.jamLembur}j):</span> <b>Rp ${calc.totalLemburNominal.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Makan/Transport:</span> <b>Rp ${(item.tunjangan_makan_transport||0).toLocaleString('id-ID')}</b></div>
                 </div>
                 <div>
-                  <div class="detail-item"><span>Bonus Kehadiran:</span> <b>Rp ${bHadir.toLocaleString('id-ID')}</b></div>
-                  <div class="detail-item"><span>Tambahan Lain:</span> <b>Rp ${tLain.toLocaleString('id-ID')}</b></div>
-                  <div class="detail-item"><span>Potongan:</span> <b style="color:#dc3545;">-Rp ${pot.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Bonus Kehadiran:</span> <b>Rp ${calc.bonusKehadiranDiterima.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Tambahan Lain:</span> <b>Rp ${(item.tambahan_lain||0).toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Potongan:</span> <b style="color:#dc3545;">-Rp ${(item.potongan_lain||0).toLocaleString('id-ID')}</b></div>
                 </div>
               </div>
             </div>
@@ -426,16 +476,8 @@
     dataKaryawan.forEach((item, index) => {
       const childId = `a-child-${index}`;
       const absensiUser = riwayatAbsenList.filter(a => a.nama === item.nama || a.id_karyawan === item.id_karyawan);
-      const totalHadir = absensiUser.length;
-
-      const gajipok = item.gaji_pokok || 0;
-      const tWeekend = item.tunjangan_weekend || 0;
-      const tMakan = item.tunjangan_makan_transport || 0;
-      const bHadir = item.bonus_kehadiran || 0;
-      const tLain = item.tambahan_lain || 0;
-      const pot = item.potongan_lain || 0;
-
-      const totalTHP = gajipok + tWeekend + tMakan + bHadir + tLain - pot;
+      
+      const calc = hitungTHPDinamis(item, absensiUser);
 
       const trParent = document.createElement('tr');
       trParent.className = 'parent-row';
@@ -445,8 +487,8 @@
         </td>
         <td><b>${item.nama}</b><br><small style="color:#666;">ID: ${item.id_karyawan}</small></td>
         <td>${item.no_hp || '-'}</td>
-        <td><span class="badge-hadir">${totalHadir} Hari Hadir</span></td>
-        <td><b style="color:#28a745;">Rp ${totalTHP.toLocaleString('id-ID')}</b></td>
+        <td><span class="badge-hadir">${calc.totalHadir} Hari Hadir</span></td>
+        <td><b style="color:#28a745;">Rp ${calc.totalTHP.toLocaleString('id-ID')}</b></td>
       `;
 
       const trChild = document.createElement('tr');
@@ -463,8 +505,9 @@
             </div>
             <div class="detail-box">
               <h5>Rincian Gaji Periode Ini</h5>
-              <div class="detail-item"><span>Total Kehadiran:</span> <b>${totalHadir} Hari</b></div>
-              <div class="detail-item"><span>Take Home Pay:</span> <b style="color:#28a745;">Rp ${totalTHP.toLocaleString('id-ID')}</b></div>
+              <div class="detail-item"><span>Total Kehadiran:</span> <b>${calc.totalHadir} Hari (Weekend: ${calc.hariWeekendHadir}x)</b></div>
+              <div class="detail-item"><span>Lembur:</span> <b>${calc.jamLembur} Jam</b></div>
+              <div class="detail-item"><span>Take Home Pay:</span> <b style="color:#28a745;">Rp ${calc.totalTHP.toLocaleString('id-ID')}</b></div>
             </div>
           </div>
         </td>
@@ -541,9 +584,10 @@
     document.getElementById('namaPemilik').value = item.nama_pemilik || '';
 
     document.getElementById('gajiPokok').value = item.gaji_pokok || 0;
-    document.getElementById('tunjanganWeekend').value = item.tunjangan_weekend || 0;
+    document.getElementById('tunjanganWeekend').value = item.tunjangan_weekend || 25000;
     document.getElementById('tunjanganMakanTransport').value = item.tunjangan_makan_transport || 0;
     document.getElementById('bonusKehadiran').value = item.bonus_kehadiran || 0;
+    document.getElementById('lemburJam').value = item.lembur_jam || 0;
     document.getElementById('tambahanLain').value = item.tambahan_lain || 0;
     document.getElementById('potonganLain').value = item.potongan_lain || 0;
 
@@ -569,9 +613,10 @@
     const nama_pemilik = document.getElementById('namaPemilik').value.trim();
 
     const gaji_pokok = parseFloat(document.getElementById('gajiPokok').value) || 0;
-    const tunjangan_weekend = parseFloat(document.getElementById('tunjanganWeekend').value) || 0;
+    const tunjangan_weekend = parseFloat(document.getElementById('tunjanganWeekend').value) || 25000;
     const tunjangan_makan_transport = parseFloat(document.getElementById('tunjanganMakanTransport').value) || 0;
     const bonus_kehadiran = parseFloat(document.getElementById('bonusKehadiran').value) || 0;
+    const lembur_jam = parseFloat(document.getElementById('lemburJam').value) || 0;
     const tambahan_lain = parseFloat(document.getElementById('tambahanLain').value) || 0;
     const potongan_lain = parseFloat(document.getElementById('potonganLain').value) || 0;
 
@@ -607,6 +652,7 @@
           tunjangan_weekend, 
           tunjangan_makan_transport, 
           bonus_kehadiran, 
+          lembur_jam,
           tambahan_lain, 
           potongan_lain 
         })
