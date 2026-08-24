@@ -64,7 +64,6 @@
 </div>
 
 <script>
-  // Cek jika sudah ada sesi login aktif saat halaman dimuat
   window.addEventListener('DOMContentLoaded', () => {
     const userSession = localStorage.getItem('user_padel');
     if (userSession) {
@@ -102,7 +101,6 @@
       return alert("Silakan masukkan ID Karyawan atau No. HP!");
     }
 
-    // 1. JIKA MEMASUKKAN ADMIN / BOSS -> LANGSUNG Arahkan ke Dashboard Admin
     if (inputVal.toUpperCase() === 'ADMIN' || inputVal.toUpperCase() === 'BOSS') {
       const adminData = { 
         id_karyawan: 'ADMIN', 
@@ -115,13 +113,11 @@
       return;
     }
 
-    // 2. JIKA KARYAWAN -> CEK KE BACKEND
     try {
       const res = await fetch('/api/karyawan');
       if (!res.ok) throw new Error("Gagal terhubung ke server backend!");
 
       const listKaryawan = await res.json();
-
       const k = listKaryawan.find(item => 
         (item.id_karyawan && item.id_karyawan.toLowerCase() === inputVal.toLowerCase()) ||
         (item.no_hp && item.no_hp.replace(/\D/g, '') === inputVal.replace(/\D/g, ''))
@@ -131,7 +127,6 @@
         return alert(`ID Karyawan / No. HP "${inputVal}" tidak terdaftar di sistem!`);
       }
 
-      // Simpan data karyawan & arahkan ke halaman presensi
       localStorage.setItem('karyawan_aktif', JSON.stringify(k));
       window.location.replace('/index.html');
     } catch (err) {
