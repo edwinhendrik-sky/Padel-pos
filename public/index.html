@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistem Management - Padel CV BUS</title>
+  <title>Sistem Management - Padel </title>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <!-- CSS & JS Leaflet untuk Maps -->
@@ -50,7 +50,7 @@
       <!-- CARD SAPAAN KARYAWAN -->
       <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl flex justify-between items-center">
         <div>
-          <h2 class="text-base font-bold text-[#1b4d3e]" id="info-karyawan-nama">Halo, Karyawan</h2>
+          <h2 class="text-base font-bold text-[#1b4d3e]" id="info-karyawan-nama">Hai, Karyawan</h2>
           <p class="text-xs text-slate-500 font-medium">ID Karyawan: <span id="info-karyawan-id" class="text-[#d99e12] font-bold">PDL-000</span></p>
         </div>
         <div class="w-10 h-10 rounded-full bg-[#1b4d3e] text-[#f4b41a] font-bold flex items-center justify-center text-sm shadow-sm border-2 border-[#d99e12]" id="info-avatar">
@@ -117,7 +117,7 @@
       <div class="pt-3 border-t border-slate-200 space-y-2">
         <div class="flex justify-between items-center">
           <h3 class="text-xs font-bold text-[#1b4d3e] uppercase tracking-wider flex items-center gap-1">
-            <span>📅 Histori Presensi Saya</span>
+            <span>📅 Histori Absensi Saya</span>
           </h3>
           <button onclick="loadHistoryKaryawan()" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold transition">
             🔄 Refresh
@@ -308,7 +308,7 @@
               <td class="p-2 text-rose-700 font-bold">${cOut}</td>
               <td class="p-2">
                 ${isValid 
-                  ? `<span class="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.5 rounded">Sah</span>` 
+                  ? `<span class="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.5 rounded">Valid</span>` 
                   : `<span class="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded">Aktif</span>`}
               </td>
             </tr>
