@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Absensi Karyawan - Padel</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { 
+      background: linear-gradient(135deg, #1b4d3e 0%, #2c5e4a 50%, #f4b41a 100%);
+      display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px;
+    }
+    .login-card { 
+      background: rgba(255, 255, 255, 0.96); 
+      padding: 40px 30px; 
+      border-radius: 16px; 
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25); 
+      width: 100%; 
+      max-width: 420px; 
+      text-align: center;
+    }
+    .brand-header { margin-bottom: 25px; }
+    .brand-header h1 { margin: 0; color: #1b4d3e; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .brand-header p { margin: 4px 0 0 0; color: #d99e12; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+    h2 { margin-top: 0; color: #1a252f; font-size: 18px; font-weight: 700; }
+    .subtitle { color: #6c757d; font-size: 13px; margin-bottom: 25px; }
+    .form-group { margin-bottom: 20px; text-align: left; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: #495057; }
+    input { 
+      width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 14px; 
+      background-color: #fff; color: #333; text-align: center; font-weight: bold;
+    }
+    input:focus { border-color: #f4b41a; outline: none; box-shadow: 0 0 5px rgba(244, 180, 26, 0.3); }
+    
+    .btn-primary { 
+      width: 100%; padding: 14px; 
+      background-color: #1b4d3e; color: white; 
+      border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; 
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background-color: #14382d; }
+  </style>
+</head>
+<body>
+
+<div class="login-card">
+  <div class="brand-header">
+    <h1>Management Padel</h1>
+    <p>Sudirman & Mengger Bandung</p>
+  </div>
+
+  <h2>Portal Absensi & HR</h2>
+  <div class="subtitle">Silakan masukkan ID Karyawan atau No. HP Anda</div>
+  
+  <form id="formLoginKaryawan" onsubmit="prosesLogin(event)">
+    <div class="form-group">
+      <label for="input-login-id">ID Karyawan / No. HP:</label>
+      <input type="text" id="input-login-id" placeholder="Contoh: PDL-001" required autocomplete="off">
+    </div>
+    
+    <button type="submit" class="btn-primary">MASUK KE SISTEM</button>
+  </form>
+</div>
+
+<script>
+  // Cek jika sudah ada sesi login aktif saat halaman dimuat
+  window.addEventListener('DOMContentLoaded', () => {
+    const userSession = localStorage.getItem('user_padel');
+    if (userSession) {
+      try {
+        const u = JSON.parse(userSession);
+        if (u && (u.role === 'admin' || u.id_karyawan === 'ADMIN')) {
+          window.location.replace('/admin.html');
+          return;
+        }
+      } catch (e) {}
+    }
+
+    const savedKaryawan = localStorage.getItem('karyawan_aktif');
+    if (savedKaryawan && savedKaryawan !== 'null' && savedKaryawan !== 'undefined') {
+      try {
+        const k = JSON.parse(savedKaryawan);
+        if (k && k.id_karyawan) {
+          if (k.id_karyawan.toUpperCase() === 'ADMIN') {
+            window.location.replace('/admin.html');
+          } else {
+            window.location.replace('/index.html');
+          }
+        }
+      } catch (e) {
+        localStorage.removeItem('karyawan_aktif');
+      }
+    }
+  });
+
+  async function prosesLogin(e) {
+    e.preventDefault();
+    const inputVal = document.getElementById('input-login-id').value.trim();
+
+    if (!inputVal) {
+      return alert("Silakan masukkan ID Karyawan atau No. HP!");
+    }
+
+    // 1. JIKA MEMASUKKAN ADMIN / BOSS -> LANGSUNG Arahkan ke Dashboard Admin
+    if (inputVal.toUpperCase() === 'ADMIN' || inputVal.toUpperCase() === 'BOSS') {
+      const adminData = { 
+        id_karyawan: 'ADMIN', 
+        nama: 'Administrator', 
+        role: 'admin' 
+      };
+      localStorage.setItem('user_padel', JSON.stringify(adminData));
+      localStorage.setItem('karyawan_aktif', JSON.stringify(adminData));
+      window.location.replace('/admin.html');
+      return;
+    }
+
+    // 2. JIKA KARYAWAN -> CEK KE BACKEND
+    try {
+      const res = await fetch('/api/karyawan');
+      if (!res.ok) throw new Error("Gagal terhubung ke server backend!");
+
+      const listKaryawan = await res.json();
+
+      const k = listKaryawan.find(item => 
+        (item.id_karyawan && item.id_karyawan.toLowerCase() === inputVal.toLowerCase()) ||
+        (item.no_hp && item.no_hp.replace(/\D/g, '') === inputVal.replace(/\D/g, ''))
+      );
+
+      if (!k) {
+        return alert(`ID Karyawan / No. HP "${inputVal}" tidak terdaftar di sistem!`);
+      }
+
+      // Simpan data karyawan & arahkan ke halaman presensi
+      localStorage.setItem('karyawan_aktif', JSON.stringify(k));
+      window.location.replace('/index.html');
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+</script>
+
+</body>
+</html>

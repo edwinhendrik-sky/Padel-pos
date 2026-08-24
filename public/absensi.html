@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laporan Absensi & Gaji Per Periode - Padel</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    
+    /* Navigasi Header */
+    .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .user-info { font-weight: 600; color: #495057; font-size: 14px; }
+    .btn-action { text-decoration: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; color: white; display: inline-block; border: none; cursor: pointer; }
+    .btn-admin { background-color: #007bff; }
+    .btn-admin:hover { background-color: #0056b3; }
+    .btn-logout { background-color: #dc3545; }
+    .btn-logout:hover { background-color: #c82333; }
+
+    /* Card Box */
+    .card { background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 25px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+    h2, h3 { margin: 0; color: #1a252f; }
+
+    /* Filter Tanggal Periode */
+    .filter-container { display: flex; align-items: center; gap: 12px; background-color: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-group { display: flex; align-items: center; gap: 8px; }
+    .filter-group label { font-size: 13px; font-weight: 600; color: #495057; }
+    .filter-group input[type="date"] { padding: 8px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 13px; }
+    .btn-filter { background-color: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    .btn-filter:hover { background-color: #218838; }
+    .btn-reset { background-color: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    .btn-reset:hover { background-color: #5a6268; }
+
+    /* Info Banner Periode */
+    .periode-info { background-color: #e8f4fe; border-left: 4px solid #007bff; padding: 10px 15px; border-radius: 4px; font-size: 13px; color: #004085; margin-bottom: 15px; font-weight: 500; }
+
+    /* Table & Parent Row Styling */
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eeeeee; font-size: 13px; vertical-align: middle; }
+    th { background-color: #007bff; color: white; font-weight: 600; }
+    
+    .parent-row { transition: background 0.2s; }
+    .parent-row:hover { background-color: #f8f9fa; }
+
+    .btn-toggle { background-color: #e9ecef; color: #495057; border: 1px solid #ced4da; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+    .btn-toggle:hover { background-color: #dee2e6; }
+
+    .badge-hadir { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background-color: #d4edda; color: #155724; }
+    .badge-bank { padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; background-color: #e2e8f0; color: #334155; }
+
+    /* Child Row Accordion Styling */
+    .child-row { display: none; background-color: #f8fafd; }
+    .child-container { padding: 15px 20px; display: grid; grid-template-columns: 1fr 2fr; gap: 20px; border-left: 4px solid #007bff; margin: 5px 0; border-radius: 4px; background: #ffffff; box-shadow: inset 0 0 5px rgba(0,0,0,0.03); }
+    @media (max-width: 768px) { .child-container { grid-template-columns: 1fr; } }
+
+    .detail-box h5 { margin: 0 0 10px 0; color: #007bff; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed #ddd; padding-bottom: 4px; }
+    .detail-item { font-size: 13px; margin-bottom: 6px; color: #555; display: flex; justify-content: space-between; }
+    .detail-item b { color: #333; }
+
+    /* Print Style */
+    @media print {
+      .nav-bar, .filter-container, .btn-toggle { display: none !important; }
+      body { background: white; padding: 0; }
+      .card { box-shadow: none; border: none; padding: 0; }
+      .child-row { display: table-row !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- Navigation Header -->
+  <div class="nav-bar">
+    <div>
+      <h2>Laporan Absensi & Gaji Karyawan</h2>
+      <div class="user-info" id="labelWelcome">Memuat data admin...</div>
+    </div>
+    <div>
+      <a href="/admin.html" class="btn-action btn-admin">← Dashboard Admin</a>
+      <button onclick="window.print()" class="btn-action" style="background-color: #17a2b8;">Cetak PDF/Print</button>
+      <button onclick="logout()" class="btn-action btn-logout">Logout</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Filter Periode Laporan Absensi</h3>
+    </div>
+
+    <!-- Filter Periode Tanggal Absensi -->
+    <div class="filter-container">
+      <div class="filter-group">
+        <label for="filterStartDate">Mulai Tanggal Absen:</label>
+        <input type="date" id="filterStartDate">
+      </div>
+      <div class="filter-group">
+        <label for="filterEndDate">Sampai Tanggal Absen:</label>
+        <input type="date" id="filterEndDate">
+      </div>
+      <button class="btn-filter" onclick="terapkanFilterAbsen()">Tampilkan Laporan</button>
+      <button class="btn-reset" onclick="resetFilterAbsen()">Reset Filter</button>
+    </div>
+
+    <!-- Info Banner Periode -->
+    <div class="periode-info" id="bannerPeriode">
+      Menampilkan seluruh riwayat absensi yang terdaftar.
+    </div>
+
+    <!-- Tabel Master Absensi & Gaji -->
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 40px; text-align: center;">Detail</th>
+          <th>ID & Nama Karyawan</th>
+          <th>No. WhatsApp</th>
+          <th>Kehadiran Periode Ini</th>
+          <th>THP (Total Take Home Pay)</th>
+        </tr>
+      </thead>
+      <tbody id="tabelReport">
+        <tr><td colspan="5" style="text-align: center;">Memuat data laporan...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  let cacheKaryawan = [];
+  let cacheRiwayatAbsen = [];
+
+  // 1. Cek Akses Admin
+  function cekAksesAdmin() {
+    const userSession = localStorage.getItem('user_padel');
+    if (!userSession) { window.location.href = '/login.html'; return; }
+
+    const user = JSON.parse(userSession);
+    if (user.role !== 'admin') {
+      alert('Akses Ditolak! Halaman ini hanya untuk Admin.');
+      window.location.href = '/';
+      return;
+    }
+    document.getElementById('labelWelcome').textContent = `Admin: ${user.nama} (${user.id_karyawan})`;
+  }
+
+  // 2. Fetch Master Data Karyawan & Riwayat Absensi
+  async function loadLaporanData() {
+    try {
+      const resGaji = await fetch('/api/gaji-lengkap');
+      cacheKaryawan = await resGaji.json();
+
+      const resAbsen = await fetch('/api/riwayat');
+      cacheRiwayatAbsen = await resAbsen.json();
+
+      // Set default input filter periode bulan berjalan
+      const dateNow = new Date();
+      const firstDay = new Date(dateNow.getFullYear(), dateNow.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(dateNow.getFullYear(), dateNow.getMonth() + 1, 0).toISOString().split('T')[0];
+
+      document.getElementById('filterStartDate').value = firstDay;
+      document.getElementById('filterEndDate').value = lastDay;
+
+      // Jalankan filter periode otomatis bulan ini
+      terapkanFilterAbsen();
+
+    } catch (err) {
+      console.error("Gagal memuat data laporan:", err);
+    }
+  }
+
+  // 3. Render Tabel Laporan Berdasarkan Periode Tanggal
+  function renderTabel(dataKaryawan, riwayatAbsenFiltered) {
+    const tbody = document.getElementById('tabelReport');
+    tbody.innerHTML = '';
+
+    if (!dataKaryawan || dataKaryawan.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Tidak ada data karyawan.</td></tr>';
+      return;
+    }
+
+    dataKaryawan.forEach((item, index) => {
+      const childId = `child-${index}`;
+
+      // Filter Absensi untuk karyawan ini pada periode yang dipilih
+      const absensiUser = riwayatAbsenFiltered.filter(a => a.nama === item.nama || a.id_karyawan === item.id_karyawan);
+      const totalHadir = absensiUser.length;
+
+      const bankBadge = item.nama_bank ? `<span class="badge-bank">${item.nama_bank}</span>` : '-';
+      const noRek = item.no_rekening || 'Belum diisi';
+      const pemilik = item.nama_pemilik || '-';
+      const noHp = item.no_hp && item.no_hp !== '-' ? item.no_hp : '-';
+
+      // Komponen Gaji
+      const gajipok = item.gaji_pokok || 0;
+      const tWeekend = item.tunjangan_weekend || 0;
+      const tMakan = item.tunjangan_makan_transport || 0;
+      const bHadir = item.bonus_kehadiran || 0;
+      const tLain = item.tambahan_lain || 0;
+      const pot = item.potongan_lain || 0;
+
+      const totalTHP = gajipok + tWeekend + tMakan + bHadir + tLain - pot;
+
+      // Parent Row HTML
+      const trParent = document.createElement('tr');
+      trParent.className = 'parent-row';
+      trParent.innerHTML = `
+        <td style="text-align: center;">
+          <button class="btn-toggle" onclick="toggleChild('${childId}', this)">▶</button>
+        </td>
+        <td><b>${item.nama}</b><br><small style="color:#666;">ID: ${item.id_karyawan}</small></td>
+        <td>${noHp}</td>
+        <td><span class="badge-hadir">${totalHadir} Hari Hadir</span></td>
+        <td><b style="color:#28a745;">Rp ${totalTHP.toLocaleString('id-ID')}</b></td>
+      `;
+
+      // Child Row HTML (Detail Rekening & Rincian Gaji)
+      const trChild = document.createElement('tr');
+      trChild.className = 'child-row';
+      trChild.id = childId;
+      trChild.innerHTML = `
+        <td colspan="5" style="padding: 0 15px 15px 15px;">
+          <div class="child-container">
+            <div class="detail-box">
+              <h5>Rincian Rekening Bank</h5>
+              <div class="detail-item"><span>Nama Bank:</span> <b>${bankBadge}</b></div>
+              <div class="detail-item"><span>No. Rekening:</span> <b>${noRek}</b></div>
+              <div class="detail-item"><span>Atas Nama:</span> <b>${pemilik}</b></div>
+            </div>
+            <div class="detail-box">
+              <h5>Rincian Komponen Gaji (Periode Ini)</h5>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                  <div class="detail-item"><span>Gaji Pokok:</span> <b>Rp ${gajipok.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Tnj. Weekend:</span> <b>Rp ${tWeekend.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Makan/Transport:</span> <b>Rp ${tMakan.toLocaleString('id-ID')}</b></div>
+                </div>
+                <div>
+                  <div class="detail-item"><span>Bonus Kehadiran:</span> <b>Rp ${bHadir.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Tambahan Lain:</span> <b>Rp ${tLain.toLocaleString('id-ID')}</b></div>
+                  <div class="detail-item"><span>Potongan:</span> <b style="color:#dc3545;">-Rp ${pot.toLocaleString('id-ID')}</b></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </td>
+      `;
+
+      tbody.appendChild(trParent);
+      tbody.appendChild(trChild);
+    });
+  }
+
+  // 4. Terapkan Filter Tanggal Absensi
+  function terapkanFilterAbsen() {
+    const startDate = document.getElementById('filterStartDate').value;
+    const endDate = document.getElementById('filterEndDate').value;
+
+    if (!startDate || !endDate) {
+      alert('Silakan pilih rentang tanggal Mulai dan Sampai Absen!');
+      return;
+    }
+
+    const filteredAbsen = cacheRiwayatAbsen.filter(a => {
+      if (!a.tanggal) return false;
+      return a.tanggal >= startDate && a.tanggal <= endDate;
+    });
+
+    // Update Banner Info
+    document.getElementById('bannerPeriode').innerHTML = `
+      Menampilkan Laporan Periode Absensi: <b>${formatTanggal(startDate)}</b> s/d <b>${formatTanggal(endDate)}</b>
+    `;
+
+    renderTabel(cacheKaryawan, filteredAbsen);
+  }
+
+  // Reset Filter Tanggal
+  function resetFilterAbsen() {
+    document.getElementById('filterStartDate').value = '';
+    document.getElementById('filterEndDate').value = '';
+    document.getElementById('bannerPeriode').innerHTML = `Menampilkan seluruh riwayat absensi yang terdaftar.`;
+    renderTabel(cacheKaryawan, cacheRiwayatAbsen);
+  }
+
+  // Toggle Accordion Detail Row
+  function toggleChild(childId, btn) {
+    const childRow = document.getElementById(childId);
+    if (childRow.style.display === 'table-row') {
+      childRow.style.display = 'none';
+      btn.textContent = '▶';
+    } else {
+      childRow.style.display = 'table-row';
+      btn.textContent = '▼';
+    }
+  }
+
+  // Helper Format Tanggal Indonesia
+  function formatTanggal(strTgl) {
+    if (!strTgl) return '-';
+    const p = strTgl.split('-');
+    if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+    return strTgl;
+  }
+
+  function logout() {
+    if (confirm("Logout dari sesi Admin?")) {
+      localStorage.clear();
+      window.location.href = '/login.html';
+    }
+  }
+
+  window.onload = () => {
+    cekAksesAdmin();
+    loadLaporanData();
+  };
+</script>
+
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presensi Kerja - Padel Club</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // PROTEKSI SESI LOGIN KARYAWAN
+    let currentKaryawan = null;
+    const savedKaryawan = localStorage.getItem('karyawan_aktif');
+    if (!savedKaryawan || savedKaryawan === 'null' || savedKaryawan === 'undefined') {
+      window.location.replace('/login.html');
+    } else {
+      try {
+        currentKaryawan = JSON.parse(savedKaryawan);
+        if (!currentKaryawan || !currentKaryawan.id_karyawan) {
+          window.location.replace('/login.html');
+        }
+      } catch (e) {
+        localStorage.removeItem('karyawan_aktif');
+        window.location.replace('/login.html');
+      }
+    }
+  </script>
+</head>
+<body class="bg-gradient-to-br from-[#1b4d3e] via-[#2c5e4a] to-[#d99e12] min-h-screen flex items-center justify-center p-4 font-sans text-slate-800">
+
+  <div class="w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-amber-200/40">
+    
+    <!-- HEADER BRANDING HIJAU & EMAS -->
+    <div class="bg-[#1b4d3e] p-5 text-white flex justify-between items-center border-b-4 border-[#d99e12]">
+      <div>
+        <span class="text-[10px] font-bold tracking-widest text-[#f4b41a] uppercase block">STAFF ATTENDANCE</span>
+        <h1 class="text-xl font-black text-white tracking-tight">Presensi Kerja</h1>
+        <p class="text-[11px] text-emerald-100/80">Padel Del Luna & Padel Boss Mengger</p>
+      </div>
+      <button onclick="logoutKaryawan()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-3.5 py-2 rounded-lg font-bold transition shadow">
+        Keluar
+      </button>
+    </div>
+
+    <div class="p-5 space-y-4">
+      
+      <!-- CARD SAPAAN KARYAWAN -->
+      <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl flex justify-between items-center">
+        <div>
+          <h2 class="text-base font-bold text-[#1b4d3e]" id="info-karyawan-nama">Halo, Karyawan</h2>
+          <p class="text-xs text-slate-500 font-medium">ID Karyawan: <span id="info-karyawan-id" class="text-[#d99e12] font-bold">PDL-000</span></p>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-[#1b4d3e] text-[#f4b41a] font-bold flex items-center justify-center text-sm shadow-sm border-2 border-[#d99e12]" id="info-avatar">
+          P
+        </div>
+      </div>
+
+      <!-- FORM LOKASI & SHIFT -->
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">LOKASI KERJA</label>
+          <select id="select-lokasi" onchange="updateShiftOptions()" class="w-full border border-slate-300 p-2.5 rounded-lg text-sm bg-white font-medium focus:ring-2 focus:ring-[#f4b41a] focus:border-[#1b4d3e] outline-none">
+            <option value="del_luna">Padel Del Luna</option>
+            <option value="boss_mengger">Padel Boss Mengger</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">SHIFT HARI INI</label>
+          <select id="select-shift" class="w-full border border-slate-300 p-2.5 rounded-lg text-sm bg-white font-medium focus:ring-2 focus:ring-[#f4b41a] focus:border-[#1b4d3e] outline-none">
+          </select>
+        </div>
+      </div>
+
+      <!-- TAMPILAN KAMERA SELFIE & INDIKATOR GPS -->
+      <div class="space-y-2 pt-1">
+        <div class="flex justify-between items-center text-xs">
+          <label class="font-bold text-slate-700 uppercase tracking-wider">KAMERA PRESENSI SELFIE</label>
+          <span id="gps-status" class="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> GPS Aktif
+          </span>
+        </div>
+
+        <div class="relative bg-slate-900 rounded-xl overflow-hidden aspect-[4/3] border-2 border-[#1b4d3e] shadow-inner flex items-center justify-center">
+          <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
+          <canvas id="canvas" class="hidden"></canvas>
+          <div class="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] py-1 px-2.5 rounded text-center font-medium">
+            Posisikan wajah Anda dengan jelas di dalam kamera
+          </div>
+        </div>
+      </div>
+
+      <!-- TOMBOL CLOCK IN & CLOCK OUT -->
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button onclick="eksekusiAbsen('in')" class="bg-[#1b4d3e] hover:bg-[#14382d] text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition flex justify-center items-center gap-1 border-b-2 border-emerald-900">
+          📍 Clock In
+        </button>
+        <button onclick="eksekusiAbsen('out')" class="bg-[#b71c1c] hover:bg-[#9a1717] text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition flex justify-center items-center gap-1 border-b-2 border-rose-900">
+          🏁 Clock Out
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let masterLokasi = {};
+    let videoStream = null;
+
+    async function loadLokasi() {
+      try {
+        const res = await fetch('/api/lokasi');
+        masterLokasi = await res.json();
+        updateShiftOptions();
+      } catch (err) {
+        console.error("Gagal muat lokasi:", err);
+      }
+    }
+
+    function updateShiftOptions() {
+      const kode = document.getElementById('select-lokasi').value;
+      const selectShift = document.getElementById('select-shift');
+      selectShift.innerHTML = '';
+
+      if (masterLokasi[kode] && masterLokasi[kode].shifts) {
+        masterLokasi[kode].shifts.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s;
+          opt.innerText = s;
+          selectShift.appendChild(opt);
+        });
+      }
+    }
+
+    async function mulaikamera() {
+      try {
+        videoStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, 
+          audio: false 
+        });
+        document.getElementById('webcam').srcObject = videoStream;
+      } catch (err) {
+        alert("Gagal membuka kamera: Mohon berikan izin akses kamera di browser HP Anda!");
+      }
+    }
+
+    function matikanKamera() {
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+      }
+    }
+
+    function ambilFotoBase64() {
+      const video = document.getElementById('webcam');
+      const canvas = document.getElementById('canvas');
+      canvas.width = video.videoWidth || 320;
+      canvas.height = video.videoHeight || 240;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/jpeg', 0.6);
+    }
+
+    async function eksekusiAbsen(tipe) {
+      if (!currentKaryawan || !currentKaryawan.id_karyawan) {
+        alert("Sesi presensi berakhir. Silakan login kembali!");
+        return logoutKaryawan();
+      }
+
+      const fotoBase64 = ambilFotoBase64();
+      if (!fotoBase64 || fotoBase64.length < 100) {
+        return alert("Kamera belum siap. Pastikan wajah Anda terlihat di layar kamera!");
+      }
+
+      const kodeLokasi = document.getElementById('select-lokasi').value;
+      const shift = document.getElementById('select-shift').value;
+
+      if (!navigator.geolocation) {
+        return alert("Browser/HP Anda tidak mendukung fitur lokasi GPS.");
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const payload = {
+            id_karyawan: currentKaryawan.id_karyawan,
+            kode_lokasi: kodeLokasi,
+            shift: shift,
+            user_lat: pos.coords.latitude,
+            user_lng: pos.coords.longitude,
+            foto: fotoBase64
+          };
+
+          const endpoint = (tipe === 'in') ? '/api/clock-in' : '/api/clock-out';
+
+          try {
+            const res = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || "Gagal Presensi!");
+
+            alert("✅ " + result.message);
+          } catch (err) {
+            alert("❌ " + err.message);
+          }
+        },
+        (err) => {
+          alert("Error GPS: Mohon aktifkan GPS Lokasi pada HP Anda untuk melakukan presensi!");
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    }
+
+    function logoutKaryawan() {
+      matikanKamera();
+      localStorage.removeItem('karyawan_aktif');
+      window.location.replace('/login.html');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (currentKaryawan) {
+        document.getElementById('info-karyawan-nama').innerText = `Halo, ${currentKaryawan.nama}`;
+        document.getElementById('info-karyawan-id').innerText = currentKaryawan.id_karyawan;
+        document.getElementById('info-avatar').innerText = currentKaryawan.nama ? currentKaryawan.nama.charAt(0).toUpperCase() : 'P';
+      }
+      loadLokasi();
+      mulaikamera();
+    });
+  </script>
+</body>
+</html>
