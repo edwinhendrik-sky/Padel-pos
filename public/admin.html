@@ -95,14 +95,15 @@
         <thead class="bg-slate-800 text-white uppercase text-xs">
           <tr>
             <th class="p-3">ID & Nama</th>
-            <th class="p-3">Total Kehadiran</th>
+            <th class="p-3">Total Kehadiran Valid</th>
             <th class="p-3">Hadir Weekend</th>
+            <th class="p-3">Tnj. Transport</th>
             <th class="p-3">Estimasi THP Gaji</th>
             <th class="p-3 text-center">Cetak Slip</th>
           </tr>
         </thead>
         <tbody id="tb-payroll" class="divide-y divide-slate-200">
-          <tr><td colspan="5" class="p-4 text-center text-slate-500">Klik "Hitung Gaji Periode" di atas...</td></tr>
+          <tr><td colspan="6" class="p-4 text-center text-slate-500">Klik "Hitung Gaji Periode" di atas...</td></tr>
         </tbody>
       </table>
     </div>
@@ -320,7 +321,7 @@
   async function hitungGajiPeriode() {
     const start = document.getElementById('p-start').value;
     const end = document.getElementById('p-end').value;
-    const target = parseInt(document.getElementById('p-target').value) || 26;
+    const targetHari = parseInt(document.getElementById('p-target').value) || 26;
 
     const resAbsen = await fetch('/api/riwayat');
     const absensi = await resAbsen.json();
@@ -332,49 +333,106 @@
 
     const tbody = document.getElementById('tb-payroll');
     tbody.innerHTML = dataStafGlobal.map(k => {
-      const userAbsen = absensi.filter(a => (a.id_karyawan === k.id_karyawan || a.nama === k.nama) && a.tanggal >= start && a.tanggal <= end);
-      const totalHadir = userAbsen.length;
+      // Filter absensi karyawan dalam periode
+      const userAbsen = absensi.filter(a => 
+        (a.id_karyawan === k.id_karyawan || a.nama === k.nama) && 
+        a.tanggal >= start && a.tanggal <= end
+      );
+
+      // 1. HITUNG HARI KERJA VALID (Harus ada Clock In DAN Clock Out)
+      const absenValid = userAbsen.filter(a => a.clock_in && a.clock_out);
+      const totalHadirValid = absenValid.length;
+
+      // 2. HITUNG HADIR WEEKEND (Sabtu & Minggu dari absen valid)
       let hadirWeekend = 0;
-      userAbsen.forEach(a => {
+      absenValid.forEach(a => {
         if (a.tanggal) {
           const day = new Date(a.tanggal).getDay();
           if (day === 0 || day === 6) hadirWeekend++;
         }
       });
 
-      const gapokProporsional = totalHadir >= target ? Number(k.gaji_pokok||0) : (Number(k.gaji_pokok||0) / target) * totalHadir;
-      const nominalWeekend = hadirWeekend * (Number(k.tunjangan_weekend)||25000);
-      const bonusHadir = totalHadir >= target ? Number(k.bonus_kehadiran||0) : 0;
-      const thp = gapokProporsional + nominalWeekend + bonusHadir + Number(k.tunjangan_makan_transport||0);
+      // 3. HITUNG TUNJANGAN TRANSPORT (Plafon 300rb, potong 10rb/hari jika absen)
+      const hariAlpa = Math.max(0, targetHari - totalHadirValid);
+      const potonganTransport = hariAlpa * 10000;
+      const tnjTransportNett = Math.max(0, 300000 - potonganTransport);
+
+      // 4. HITUNG GAJI POKOK PROPORSIONAL & BONUS KEHADIRAN
+      const gapokProporsional = totalHadirValid >= targetHari 
+        ? Number(k.gaji_pokok || 0) 
+        : (Number(k.gaji_pokok || 0) / targetHari) * totalHadirValid;
+      
+      const nominalWeekend = hadirWeekend * (Number(k.tunjangan_weekend) || 25000);
+      const bonusHadir = totalHadirValid >= targetHari ? Number(k.bonus_kehadiran || 0) : 0;
+
+      // 5. TOTAL TAKE HOME PAY (THP)
+      const thp = gapokProporsional + nominalWeekend + bonusHadir + tnjTransportNett;
 
       return `
-        <tr class="hover:bg-slate-50">
-          <td class="p-3 font-bold">${k.nama}<br><span class="text-xs text-slate-500">${k.id_karyawan}</span></td>
-          <td class="p-3"><span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-xs">${totalHadir} Hari</span></td>
+        <tr class="hover:bg-slate-50 text-xs">
+          <td class="p-3 font-bold">${k.nama}<br><span class="text-slate-500 font-normal">${k.id_karyawan}</span></td>
+          <td class="p-3">
+            <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">${totalHadirValid} / ${targetHari} Hari</span>
+            ${hariAlpa > 0 ? `<br><span class="text-rose-600 font-medium text-[10px]">Alpa/Incomplete: ${hariAlpa} Hari</span>` : ''}
+          </td>
           <td class="p-3">${hadirWeekend} Hari</td>
+          <td class="p-3">
+            <span class="font-semibold">Rp ${tnjTransportNett.toLocaleString('id-ID')}</span>
+            ${potonganTransport > 0 ? `<br><span class="text-rose-500 text-[10px]">(Potongan: -Rp ${potonganTransport.toLocaleString('id-ID')})</span>` : ''}
+          </td>
           <td class="p-3 font-bold text-emerald-700">Rp ${Math.round(thp).toLocaleString('id-ID')}</td>
           <td class="p-3 text-center">
-            <button onclick="cetakSlip('${k.id_karyawan}', ${totalHadir}, ${hadirWeekend}, ${Math.round(thp)})" class="bg-slate-800 text-white px-2.5 py-1 rounded text-xs font-bold">🖨️ Cetak Slip</button>
+            <button onclick="cetakSlip('${k.id_karyawan}', ${totalHadirValid}, ${targetHari}, ${hadirWeekend}, ${tnjTransportNett}, ${potonganTransport}, ${Math.round(thp)})" class="bg-slate-800 text-white px-2.5 py-1 rounded text-xs font-bold hover:bg-slate-900 transition">
+              🖨️ Cetak Slip
+            </button>
           </td>
         </tr>
       `;
     }).join('');
   }
 
-  function cetakSlip(id, totalHadir, weekend, thp) {
+  function cetakSlip(id, totalHadir, targetHari, weekend, tnjTransport, potonganTransport, thp) {
     const k = dataStafGlobal.find(item => item.id_karyawan === id);
     if (!k) return;
     const w = window.open('', '_blank', 'width=700,height=800');
     w.document.write(`
-      <style>body{font-family:sans-serif;padding:30px;color:#333;}.header{border-bottom:2px solid #1b4d3e;padding-bottom:10px;margin-bottom:20px;text-align:center;}table{width:100%;border-collapse:collapse;margin:20px 0;}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:left;}</style>
-      <div class="header"><h2>PADEL CLUB MANAGEMENT</h2><p>SLIP GAJI STAF - PERIODE ${new Date().toLocaleDateString('id-ID', {month:'long', year:'numeric'})}</p></div>
+      <style>
+        body { font-family: sans-serif; padding: 30px; color: #333; }
+        .header { border-bottom: 2px solid #1b4d3e; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        td, th { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
+        .text-right { text-align: right; }
+      </style>
+      <div class="header">
+        <h2>CV Berkat Untuk Sesama</h2>
+        <p>SLIP GAJI STAF - PERIODE ${new Date().toLocaleDateString('id-ID', {month:'long', year:'numeric'})}</p>
+      </div>
       <p><b>ID / Nama:</b> ${k.id_karyawan} - ${k.nama}<br><b>Bank:</b> ${k.nama_bank || '-'} (${k.no_rekening || '-'})</p>
       <table>
-        <tr><th>Komponen Gaji</th><th>Nominal</th></tr>
-        <tr><td>Gaji Pokok (Total Hadir ${totalHadir} Hari)</td><td>Rp ${Number(k.gaji_pokok||0).toLocaleString('id-ID')}</td></tr>
-        <tr><td>Tunjangan Weekend (${weekend} Hari)</td><td>Rp ${(weekend * 25000).toLocaleString('id-ID')}</td></tr>
-        <tr><td>Tunjangan Makan & Transport</td><td>Rp ${Number(k.tunjangan_makan_transport||0).toLocaleString('id-ID')}</td></tr>
-        <tr><td><b>TAKE HOME PAY (THP)</b></td><td><b>Rp ${thp.toLocaleString('id-ID')}</b></td></tr>
+        <tr><th>Komponen Gaji</th><th class="text-right">Nominal</th></tr>
+        <tr>
+          <td>Gaji Pokok (${totalHadir}/${targetHari} Hari Valid)</td>
+          <td class="text-right">Rp ${Math.round(totalHadir >= targetHari ? Number(k.gaji_pokok||0) : (Number(k.gaji_pokok||0)/targetHari)*totalHadir).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td>Tunjangan Weekend (${weekend} Hari)</td>
+          <td class="text-right">Rp ${(weekend * 25000).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td>
+            Tunjangan Transportasi Dasar (Rp 300.000)
+            ${potonganTransport > 0 ? `<br><small style="color:red;">*Dipotong ${potonganTransport / 10000} hari alpa/inkomplit (-Rp ${potonganTransport.toLocaleString('id-ID')})</small>` : ''}
+          </td>
+          <td class="text-right">Rp ${tnjTransport.toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td>Bonus Kehadiran Full</td>
+          <td class="text-right">Rp ${(totalHadir >= targetHari ? Number(k.bonus_kehadiran||0) : 0).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr style="font-weight:bold; background:#f4f9f6;">
+          <td>TAKE HOME PAY (THP)</td>
+          <td class="text-right" style="color:#1b4d3e;">Rp ${thp.toLocaleString('id-ID')}</td>
+        </tr>
       </table>
       <button onclick="window.print()" style="padding:10px 20px;background:#1b4d3e;color:white;border:none;border-radius:5px;font-weight:bold;cursor:pointer;">Cetak PDF</button>
     `);
