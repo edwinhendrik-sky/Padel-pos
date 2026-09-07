@@ -53,6 +53,13 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
+// Helper untuk mendapatkan tanggal lokal Indonesia (WIB / Asia/Jakarta)
+function getTanggalLokal() {
+  const options = { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' };
+  const formatter = new Intl.DateTimeFormat('en-CA', options); // Format yyyy-mm-dd
+  return formatter.format(new Date());
+}
+
 // Inisialisasi Otomatis Tabel Database
 async function initDB() {
   try {
@@ -173,7 +180,7 @@ app.post('/api/karyawan', async (req, res) => {
     await pool.query(`
       INSERT INTO karyawan (id_karyawan, nama, no_hp, tgl_join, role) VALUES ($1, $2, $3, $4, $5)
       ON CONFLICT (id_karyawan) DO UPDATE SET nama = $2, no_hp = $3, tgl_join = $4, role = $5;
-    `, [id_karyawan, nama, no_hp || '-', tgl_join || new Date().toISOString().split('T')[0], role || 'karyawan']);
+    `, [id_karyawan, nama, no_hp || '-', tgl_join || getTanggalLokal(), role || 'karyawan']);
     res.json({ message: 'Data karyawan berhasil disimpan!' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -221,8 +228,9 @@ app.post('/api/clock-in', async (req, res) => {
     }
   }
 
-  const today = new Date().toISOString().split('T')[0];
-  const timeNow = new Date().toLocaleTimeString('id-ID');
+  // Menggunakan tanggal lokal Indonesia (WIB)
+  const today = getTanggalLokal();
+  const timeNow = new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' });
 
   try {
     const check = await pool.query('SELECT * FROM absensi WHERE id_karyawan = $1 AND tanggal = $2 AND clock_out IS NULL', [id_karyawan, today]);
@@ -240,7 +248,9 @@ app.post('/api/clock-in', async (req, res) => {
 // Absen Clock Out
 app.post('/api/clock-out', async (req, res) => {
   const { id_karyawan, foto } = req.body;
-  const today = new Date().toISOString().split('T')[0];
+  
+  // Menggunakan tanggal lokal Indonesia (WIB)
+  const today = getTanggalLokal();
 
   try {
     const check = await pool.query('SELECT * FROM absensi WHERE id_karyawan = $1 AND tanggal = $2 AND clock_out IS NULL', [id_karyawan, today]);
