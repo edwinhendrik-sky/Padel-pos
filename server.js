@@ -24,20 +24,20 @@ const PUBLIC_DIR = fs.existsSync(path.join(__dirname, 'public'))
 
 app.use(express.static(PUBLIC_DIR));
 
-// Master Lokasi Padel
+// Master Lokasi Padel (Radius 100 Meter)
 const LOKASI_PADEL = {
   "del_luna": {
     nama: "Padel Del Luna",
     lat: -6.918133332267737,
     lng: 107.58425180908361,
-    radius_meter: 50,
+    radius_meter: 100,
     shifts: ["Shift 1 (07:00 - 15:00)", "Shift 2 (14:00 - 22:00)", "Shift Custom"]
   },
   "boss_mengger": {
     nama: "Padel Boss Mengger",
     lat: -6.966117949983328,
     lng: 107.62140225511331,
-    radius_meter: 50,
+    radius_meter: 100,
     shifts: ["Shift 1 (08:00 - 16:00)", "Shift 2 (13:00 - 23:00)", "Shift Custom"]
   }
 };
@@ -224,7 +224,7 @@ app.post('/api/clock-in', async (req, res) => {
   if (user_lat !== undefined && user_lng !== undefined && targetLokasi) {
     const jarak = hitungJarak(targetLokasi.lat, targetLokasi.lng, user_lat, user_lng);
     if (jarak > targetLokasi.radius_meter) {
-      return res.status(403).json({ error: `Gagal Absen! Jarak Anda ${Math.round(jarak)}m dari lokasi.` });
+      return res.status(403).json({ error: `Gagal Absen! Jarak Anda ${Math.round(jarak)}m dari lokasi (Maksimal 100m).` });
     }
   }
 
