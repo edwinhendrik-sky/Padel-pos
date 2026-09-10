@@ -53,14 +53,13 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
-// Helper untuk mendapatkan tanggal lokal Indonesia (WIB / Asia/Jakarta)
 function getTanggalLokal() {
   const options = { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' };
   const formatter = new Intl.DateTimeFormat('en-CA', options);
   return formatter.format(new Date());
 }
 
-// Inisialisasi Otomatis Tabel Database
+// Inisialisasi Otomatis Tabel Database & Seeding Data Member Excel
 async function initDB() {
   try {
     await pool.query(`
@@ -107,6 +106,17 @@ async function initDB() {
         waktu VARCHAR(20)
       );
 
+      CREATE TABLE IF NOT EXISTS member_padel (
+        id_member VARCHAR(50) PRIMARY KEY,
+        nama VARCHAR(100) NOT NULL,
+        no_hp VARCHAR(30) NOT NULL,
+        status_membership VARCHAR(30) DEFAULT 'AKTIF',
+        start_member VARCHAR(20) DEFAULT '',
+        stop_member VARCHAR(20) DEFAULT '',
+        total_poin INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE TABLE IF NOT EXISTS booking_lapangan (
         id SERIAL PRIMARY KEY,
         id_booking VARCHAR(50) UNIQUE NOT NULL,
@@ -122,17 +132,63 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
-      CREATE TABLE IF NOT EXISTS member_poin (
-        no_hp VARCHAR(30) PRIMARY KEY,
-        nama VARCHAR(100) NOT NULL,
-        total_poin INTEGER DEFAULT 0,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
       INSERT INTO karyawan (id_karyawan, nama, no_hp, tgl_join, role) 
       VALUES ('ADMIN', 'Administrator', '081111111111', '2026-01-01', 'admin')
       ON CONFLICT (id_karyawan) DO UPDATE SET role = 'admin';
     `);
+
+    // Seeding data member dari file Excel jika tabel kosong
+    const checkMember = await pool.query('SELECT COUNT(*) FROM member_padel');
+    if (parseInt(checkMember.rows[0].count) === 0) {
+      const initialMembers = [
+        ['PB0010', 'YAYU SRI DINASTI', '6281288444334', 'AKTIF', '2026-07-03', '2026-06-09'],
+        ['PB0011', 'MELLISA GUNAWAN', '6281222888805', 'AKTIF', '2026-01-04', '2026-01-10'],
+        ['PB0012', 'FREDDY', '62811237738', 'AKTIF', '2026-06-03', '2026-05-09'],
+        ['PB0013', 'CLAUDIA VANESSA', '6287823212221', 'AKTIF', '2026-06-03', '2026-05-09'],
+        ['PB0014', 'DEASY LIUNARDO', '6282126255968', 'AKTIF', '2026-01-04', '2026-01-10'],
+        ['PB0015', 'RAMA TYAS', '6288299019106', 'AKTIF', '2026-01-04', '2026-01-10'],
+        ['PB0016', 'IVO HIKARU WIJAYAKUSUMA', '62818978189', 'AKTIF', '2026-08-03', '2026-07-09'],
+        ['PB0017', 'ZALE', '6281221892069', 'AKTIF', '2026-06-03', '2026-05-09'],
+        ['PB0018', 'TOMY SARWANTO', '6281320464423', 'AKTIF', '2026-08-03', '2026-07-09'],
+        ['PB0019', 'DINNY ASHRI AKBARIANI', '6282121070757', 'AKTIF', '2026-01-04', '2026-01-10'],
+        ['PB0020', 'ANTARES PARASEVA BANDORO', '628112343003', 'AKTIF', '2026-07-03', '2026-06-09'],
+        ['PB0021', 'AL FRITA MEGA PURI', '6282128286777', 'AKTIF', '2026-03-14', '2026-09-13'],
+        ['PB0022', 'AGNES ISLY', '6281321155313', 'AKTIF', '2026-08-03', '2026-07-09'],
+        ['PB0023', 'LIZA MARIANA', '6281321620426', 'AKTIF', '2026-01-04', '2026-01-10'],
+        ['PB0024', 'CAROLINE HDI', '6285863336699', 'AKTIF', '2026-01-04', '2026-01-10'],
+        ['PB0025', 'DAVID S (@DAVID.104)', '6285721221241', 'AKTIF', '2026-03-14', '2026-09-13'],
+        ['PB0026', 'VICAQUITA LIDRAPRANOTO', '6281809787800', 'AKTIF', '2026-03-14', '2026-09-13'],
+        ['PB0027', 'ANGGA ARDIANSYAH', '628112309096', 'AKTIF', '2026-01-04', '2026-01-10'],
+        ['PB0028', 'GRACE SYNTIA DEWI', '6281809977336', 'AKTIF', '2026-11-03', '2026-10-09'],
+        ['PB0029', 'ANGGA DWI KOSWARA', '6287779994563', 'AKTIF', '2026-03-13', '2026-12-09'],
+        ['PB0030', 'FAISHAL ARDHAN', '6287838285096', 'AKTIF', '2026-03-25', '2026-09-24'],
+        ['PB0031', 'FRANCISKA CLAUDIA SUNGADI', '6281802038451', 'AKTIF', '2026-03-17', '2026-09-16'],
+        ['PB0032', 'FELIA FEBY SUTANTO', '628112388662', 'AKTIF', '2026-03-04', '2026-02-10'],
+        ['PB0033', 'ALFI RAHMAN WIDI KRISNADI', '6282116163883', 'AKTIF', '2026-11-04', '2026-10-10'],
+        ['PB0034', 'ABDUL HAKIM', '628112244619', 'AKTIF', '2026-08-04', '2026-07-10'],
+        ['PB0035', 'BRAM F PURWA', '6281918189888', 'AKTIF', '2026-04-20', '2026-10-19'],
+        ['PB0036', 'IIN RIZKI', '62818203337', 'AKTIF', '2026-04-20', '2026-10-19'],
+        ['PB0037', 'NAJMIYA BRILIANI ARFIDHIYA', '6282240440173', 'AKTIF', '2026-04-20', '2026-10-19'],
+        ['PB0038', 'ANGGI SUCI AGUSTINA', '628562312971', 'AKTIF', '2026-04-20', '2026-10-19'],
+        ['PB0039', 'KANG J. RIDWAN', '6285871582080', 'AKTIF', '2026-04-20', '2026-10-19'],
+        ['PB0040', 'FABIAN', '6281809090303', 'AKTIF', '2026-04-20', '2026-10-19'],
+        ['PB0041', 'CHRISTINE GAUTAMA', '6281319000930', 'AKTIF', '2026-04-29', '2026-10-28'],
+        ['PB0042', 'JUANITA', '628122182900', 'AKTIF', '2026-06-05', '2026-05-11'],
+        ['PB0043', 'HENRY', '6285956225050', 'AKTIF', '2026-05-28', '2026-08-27'],
+        ['PB0044', 'SEMBIRING', '6281322406496', 'AKTIF', '2026-05-28', '2026-11-27'],
+        ['PB0045', 'FADHIL ADRIAN', '6282117811569', 'AKTIF', '2026-05-30', '2026-11-29']
+      ];
+
+      for (let m of initialMembers) {
+        await pool.query(`
+          INSERT INTO member_padel (id_member, nama, no_hp, status_membership, start_member, stop_member, total_poin)
+          VALUES ($1, $2, $3, $4, $5, $6, 0)
+          ON CONFLICT (id_member) DO NOTHING;
+        `, m);
+      }
+      console.log("✅ Seeding database member Excel berhasil!");
+    }
+
     console.log("✅ Database Supabase Siap & Terkoneksi!");
   } catch (err) {
     console.error("⚠️ Koneksi DB Terkendala:", err.message);
@@ -140,29 +196,69 @@ async function initDB() {
 }
 initDB();
 
-// ================= API ENDPOINTS =================
+// ================= API ENDPOINTS MASTER MEMBER =================
+app.get('/api/member', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM member_padel ORDER BY id_member ASC');
+    res.json(result.rows || []);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
-// Karyawan & Payroll
+app.get('/api/member/next-id', async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT id_member FROM member_padel WHERE id_member LIKE 'PB%' ORDER BY id_member DESC LIMIT 1`);
+    let nextNum = 46;
+    if (result.rows.length > 0) {
+      const num = parseInt(result.rows[0].id_member.replace('PB', ''), 10);
+      if (!isNaN(num)) nextNum = num + 1;
+    }
+    res.json({ nextId: `PB${String(nextNum).padStart(4, '0')}` });
+  } catch (err) { res.json({ nextId: 'PB0046' }); }
+});
+
+app.post('/api/member', async (req, res) => {
+  const { id_member, nama, no_hp, status_membership, start_member, stop_member, total_poin } = req.body;
+  try {
+    await pool.query(`
+      INSERT INTO member_padel (id_member, nama, no_hp, status_membership, start_member, stop_member, total_poin) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ON CONFLICT (id_member) DO UPDATE SET 
+        nama = EXCLUDED.nama, 
+        no_hp = EXCLUDED.no_hp,
+        status_membership = EXCLUDED.status_membership,
+        start_member = EXCLUDED.start_member,
+        stop_member = EXCLUDED.stop_member,
+        total_poin = COALESCE(EXCLUDED.total_poin, member_padel.total_poin);
+    `, [id_member, nama, no_hp, status_membership || 'AKTIF', start_member || '', stop_member || '', parseInt(total_poin) || 0]);
+    res.json({ message: 'Data member berhasil disimpan!' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/member/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM member_padel WHERE id_member = $1', [req.params.id]);
+    res.json({ message: 'Member berhasil dihapus!' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/member/login/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM member_padel WHERE UPPER(id_member) = UPPER($1)', [id.trim()]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'ID Member tidak terdaftar di sistem Padel Boss!' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ================= API KARYAWAN & BOOKING =================
 app.get('/api/karyawan', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM karyawan ORDER BY id_karyawan ASC');
     res.json(result.rows || []);
   } catch (err) {
     res.json([{ id_karyawan: 'ADMIN', nama: 'Administrator', no_hp: '081111111111', role: 'admin' }]);
-  }
-});
-
-app.get('/api/karyawan/next-id', async (req, res) => {
-  try {
-    const result = await pool.query(`SELECT id_karyawan FROM karyawan WHERE id_karyawan LIKE 'PDL-%' ORDER BY id_karyawan DESC LIMIT 1`);
-    let nextNumber = 1;
-    if (result.rows.length > 0) {
-      const num = parseInt(result.rows[0].id_karyawan.replace('PDL-', ''), 10);
-      if (!isNaN(num)) nextNumber = num + 1;
-    }
-    res.json({ nextId: `PDL-${String(nextNumber).padStart(3, '0')}` });
-  } catch (err) {
-    res.json({ nextId: 'PDL-001' });
   }
 });
 
@@ -188,9 +284,7 @@ app.get('/api/gaji-lengkap', async (req, res) => {
       ORDER BY k.id_karyawan ASC`;
     const result = await pool.query(sql);
     res.json(result.rows);
-  } catch (err) { 
-    res.status(500).json({ error: err.message }); 
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/karyawan', async (req, res) => {
@@ -233,10 +327,9 @@ app.post('/api/gaji-rekening', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Absen Clock In (Real-time & Tanggal Hari Ini, Radius 100m)
 app.post('/api/clock-in', async (req, res) => {
   const { id_karyawan, kode_lokasi, shift, user_lat, user_lng, foto } = req.body;
-  const targetLokasi = LOKASI_PADEL[kode_lokasi || 'del_luna'];
+  const targetLokasi = LOKASI_PADEL[kode_lokasi || 'boss_mengger'];
   
   if (user_lat !== undefined && user_lng !== undefined && targetLokasi) {
     const jarak = hitungJarak(targetLokasi.lat, targetLokasi.lng, user_lat, user_lng);
@@ -261,7 +354,6 @@ app.post('/api/clock-in', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Absen Clock Out (Real-time Update Sesi Aktif Terakhir)
 app.post('/api/clock-out', async (req, res) => {
   const { id_karyawan, foto } = req.body;
   const today = getTanggalLokal();
@@ -275,7 +367,6 @@ app.post('/api/clock-out', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// API Booking Customer & Poin Member (Multi-Court & Multi-Hour)
 app.get('/api/booking/next-id', async (req, res) => {
   try {
     const todayStr = getTanggalLokal().replace(/-/g, '');
@@ -287,54 +378,34 @@ app.get('/api/booking/next-id', async (req, res) => {
       if (!isNaN(lastNum)) nextNum = lastNum + 1;
     }
     res.json({ id_booking: `BKG-${todayStr}-${String(nextNum).padStart(3, '0')}` });
-  } catch (err) {
-    res.json({ id_booking: `BKG-GENERAL-001` });
-  }
+  } catch (err) { res.json({ id_booking: `BKG-GENERAL-001` }); }
 });
 
 app.post('/api/booking', async (req, res) => {
-  const { id_booking, nama, no_hp, lokasi, tanggal, detail_jam, total_bayar, poin_didapat, bukti_transfer } = req.body;
+  const { id_booking, id_member, nama, no_hp, lokasi, tanggal, detail_jam, total_bayar, poin_didapat, bukti_transfer } = req.body;
   try {
     await pool.query(`
       INSERT INTO booking_lapangan (id_booking, nama, no_hp, lokasi, tanggal, detail_jam, total_bayar, poin_didapat, bukti_transfer) 
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `, [id_booking || 'BKG-GENERAL', nama, no_hp, lokasi, tanggal, detail_jam, total_bayar || 0, poin_didapat || 0, bukti_transfer || '']);
 
-    await pool.query(`
-      INSERT INTO member_poin (no_hp, nama, total_poin, updated_at) 
-      VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
-      ON CONFLICT (no_hp) DO UPDATE SET 
-        nama = EXCLUDED.nama,
-        total_poin = member_poin.total_poin + EXCLUDED.total_poin,
-        updated_at = CURRENT_TIMESTAMP;
-    `, [no_hp, nama, poin_didapat || 0]);
+    if (id_member) {
+      await pool.query(`
+        UPDATE member_padel 
+        SET total_poin = total_poin + $1 
+        WHERE id_member = $2
+      `, [poin_didapat || 0, id_member]);
+    }
 
     res.json({ message: 'Booking berhasil disimpan & Poin berhasil ditambahkan!' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/booking', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM booking_lapangan ORDER BY id DESC');
     res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/member-poin/:hp', async (req, res) => {
-  try {
-    const { hp } = req.params;
-    const result = await pool.query('SELECT * FROM member_poin WHERE no_hp = $1', [hp]);
-    if (result.rows.length === 0) {
-      return res.json({ total_poin: 0 });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/riwayat', async (req, res) => {
