@@ -18,14 +18,15 @@
           }
           if (document.getElementById('b-nama')) {
             document.getElementById('b-nama').value = m.nama || '';
-            document.getElementById('b-nama').readOnly = true;
           }
           if (document.getElementById('info-total-poin')) {
             document.getElementById('info-total-poin').innerText = `${m.total_poin || 0} Poin`;
           }
           if (document.getElementById('status-member-hp')) {
-            document.getElementById('status-member-hp').innerText = `ID: ${m.id_member} | ${m. nama}`;
+            document.getElementById('status-member-hp').innerText = `ID: ${m.id_member} | ${m.nama}`;
           }
+          // Tambah 1 baris default saat halaman dimuat
+          tambahBarisPesanan();
         });
       } catch (e) {
         localStorage.removeItem('member_padel');
@@ -36,7 +37,7 @@
 </head>
 <body class="bg-gradient-to-br from-[#1b4d3e] via-[#2c5e4a] to-[#d99e12] min-h-screen flex items-center justify-center p-4 font-sans text-slate-800">
 
-  <div class="w-full max-w-lg bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-amber-200/40 p-6 space-y-4 my-4">
+  <div class="w-full max-w-xl bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-amber-200/40 p-6 space-y-4 my-4">
     
     <div class="flex justify-between items-center border-b pb-3">
       <div>
@@ -72,56 +73,39 @@
         </div>
       </div>
 
-      <!-- PILIHAN MULTI-COURT (CHECKBOX 1 s/d 5) -->
       <div>
-        <label class="block font-bold text-slate-700 uppercase mb-1">Pilih Court (Bisa Pilih Lebih dari 1)</label>
-        <div class="grid grid-cols-5 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="court" value="Court 1" onchange="hitungTotal()" class="rounded"> <span>Court 1</span></label>
-          <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="court" value="Court 2" onchange="hitungTotal()" class="rounded"> <span>Court 2</span></label>
-          <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="court" value="Court 3" onchange="hitungTotal()" class="rounded"> <span>Court 3</span></label>
-          <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="court" value="Court 4" onchange="hitungTotal()" class="rounded"> <span>Court 4</span></label>
-          <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="court" value="Court 5" onchange="hitungTotal()" class="rounded"> <span>Court 5</span></label>
-        </div>
+        <label class="block font-bold text-slate-700 uppercase mb-1">Tanggal Main</label>
+        <input type="date" id="b-tanggal" required class="w-full border border-slate-300 p-2.5 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none">
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <div>
-          <label class="block font-bold text-slate-700 uppercase mb-1">Tanggal Main</label>
-          <input type="date" id="b-tanggal" required class="w-full border border-slate-300 p-2.5 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none">
+      <!-- DAFTAR PILIHAN LAPANGAN & JAM BERBEDA (MULTI-ROW) -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center">
+          <label class="block font-bold text-slate-700 uppercase">Detail Court & Jam (Bisa Beda Jam per Lapangan)</label>
+          <button type="button" onclick="tambahBarisPesanan()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold transition">➕ Tambah Court/Jam Lain</button>
         </div>
-        <div>
-          <label class="block font-bold text-slate-700 uppercase mb-1">Jam Main (Bisa Pilih Lebih dari 1 Jam)</label>
-          <div class="grid grid-cols-4 gap-1 bg-slate-50 p-2 rounded-xl border border-slate-200 max-h-32 overflow-y-auto">
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="06:00" onchange="hitungTotal()" class="rounded"> <span>06:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="07:00" onchange="hitungTotal()" class="rounded"> <span>07:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="08:00" onchange="hitungTotal()" class="rounded"> <span>08:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="09:00" onchange="hitungTotal()" class="rounded"> <span>09:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="10:00" onchange="hitungTotal()" class="rounded"> <span>10:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="11:00" onchange="hitungTotal()" class="rounded"> <span>11:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="12:00" onchange="hitungTotal()" class="rounded"> <span>12:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="13:00" onchange="hitungTotal()" class="rounded"> <span>13:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="14:00" onchange="hitungTotal()" class="rounded"> <span>14:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="15:00" onchange="hitungTotal()" class="rounded"> <span>15:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="16:00" onchange="hitungTotal()" class="rounded"> <span>16:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="17:00" onchange="hitungTotal()" class="rounded"> <span>17:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="18:00" onchange="hitungTotal()" class="rounded"> <span>18:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="19:00" onchange="hitungTotal()" class="rounded"> <span>19:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="20:00" onchange="hitungTotal()" class="rounded"> <span>20:00</span></label>
-            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="21:00" onchange="hitungTotal()" class="rounded"> <span>21:00</span></label>
-          </div>
+        <div id="container-pesanan" class="space-y-2">
+          <!-- Baris dinamis akan dimasukkan di sini -->
         </div>
       </div>
 
       <!-- KARTU RINCIAN TOTAL & POIN -->
       <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex justify-between items-center">
         <div>
-          <p class="text-[11px] font-bold text-emerald-800">Rincian Pembayaran & Poin:</p>
-          <p class="text-[10px] text-slate-600" id="info-rincian">0 Court dipilih × 0 Jam dipilih</p>
+          <p class="text-[11px] font-bold text-emerald-800">Rincian Total Pembayaran & Poin:</p>
+          <p class="text-[10px] text-slate-600" id="info-rincian">0 Sesi lapangan dipilih</p>
         </div>
         <div class="text-right">
           <span class="text-base font-black text-emerald-700 block" id="info-total-bayar">Rp 0</span>
           <span class="text-[11px] font-bold text-amber-600 block" id="info-poin-didapat">+0 Poin</span>
         </div>
+      </div>
+
+      <!-- INFORMASI REKENING RESMI PADEL BOSS -->
+      <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl space-y-1">
+        <p class="text-[11px] font-black text-blue-900 uppercase">Rekening Padel BOSS (Resmi):</p>
+        <p class="text-[11px] text-slate-700 font-semibold">No. Rekening: <span class="text-blue-900 font-bold">085-628-8999</span> (Bank BCA)</p>
+        <p class="text-[11px] text-slate-700">Atas Nama: <span class="font-bold text-slate-900">SHIRLEEN YOVITA WI / DEASY L</span></p>
       </div>
 
       <div>
@@ -151,33 +135,72 @@
       }
     }
 
+    const daftarJam = [
+      "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", 
+      "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"
+    ];
+
+    function tambahBarisPesanan() {
+      const container = document.getElementById('container-pesanan');
+      const rowId = Date.now();
+
+      let opsiJamHTML = daftarJam.map(j => `<option value="${j}">${j}</option>`).join('');
+
+      const div = document.createElement('div');
+      div.className = "flex items-center space-x-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200 row-pesanan";
+      div.id = `row-${rowId}`;
+      div.innerHTML = `
+        <select class="p-2 border rounded-lg bg-white font-bold text-slate-700 outline-none select-court" onchange="hitungTotal()">
+          <option value="Court 1">Court 1</option>
+          <option value="Court 2">Court 2</option>
+          <option value="Court 3">Court 3</option>
+          <option value="Court 4">Court 4</option>
+          <option value="Court 5">Court 5</option>
+        </select>
+        <select class="p-2 border rounded-lg bg-white font-bold text-slate-700 outline-none flex-1 select-jam" onchange="hitungTotal()">
+          ${opsiJamHTML}
+        </select>
+        <button type="button" onclick="hapusBaris('${rowId}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-2 rounded-lg font-bold transition">❌</button>
+      `;
+      container.appendChild(div);
+      hitungTotal();
+    }
+
+    function hapusBaris(rowId) {
+      const rows = document.querySelectorAll('.row-pesanan');
+      if (rows.length <= 1) {
+        return alert("Minimal harus ada 1 sesi lapangan yang dipesan!");
+      }
+      document.getElementById(`row-${rowId}`).remove();
+      hitungTotal();
+    }
+
     let calculatedTotalBayar = 0;
     let calculatedPoin = 0;
 
     function hitungTotal() {
-      const selectedCourts = document.querySelectorAll('input[name="court"]:checked');
-      const selectedJams = document.querySelectorAll('input[name="jam"]:checked');
-
+      const rows = document.querySelectorAll('.row-pesanan');
       let totalBayar = 0;
       let totalPoin = 0;
 
-      selectedCourts.forEach(court => {
-        selectedJams.forEach(jam => {
-          const hour = parseInt(jam.value.split(':')[0], 10);
-          if (hour >= 6 && hour <= 18) {
-            totalBayar += 69000;
-            totalPoin += 1;
-          } else {
-            totalBayar += 129000;
-            totalPoin += 2;
-          }
-        });
+      rows.forEach(row => {
+        const jamVal = row.querySelector('.select-jam').value;
+        const hour = parseInt(jamVal.split(':')[0], 10);
+        
+        // Aturan Tarif: 06:00 - 18:00 = 69k (1 poin), 19:00 - 22:00 = 129k (2 poin)
+        if (hour >= 6 && hour <= 18) {
+          totalBayar += 69000;
+          totalPoin += 1;
+        } else {
+          totalBayar += 129000;
+          totalPoin += 2;
+        }
       });
 
       calculatedTotalBayar = totalBayar;
       calculatedPoin = totalPoin;
 
-      document.getElementById('info-rincian').innerText = `${selectedCourts.length} Court × ${selectedJams.length} Jam dipilih`;
+      document.getElementById('info-rincian').innerText = `${rows.length} sesi lapangan/jam dipilih`;
       document.getElementById('info-total-bayar').innerText = `Rp ${totalBayar.toLocaleString('id-ID')}`;
       document.getElementById('info-poin-didapat').innerText = `+${totalPoin} Poin`;
     }
@@ -190,12 +213,17 @@
     async function kirimBooking(e) {
       e.preventDefault();
       
-      const selectedCourts = Array.from(document.querySelectorAll('input[name="court"]:checked')).map(c => c.value);
-      const selectedJams = Array.from(document.querySelectorAll('input[name="jam"]:checked')).map(j => j.value);
-
-      if (selectedCourts.length === 0 || selectedJams.length === 0) {
-        return alert("Mohon pilih minimal 1 Court dan 1 Jam main!");
+      const rows = document.querySelectorAll('.row-pesanan');
+      if (rows.length === 0) {
+        return alert("Mohon tambahkan minimal 1 sesi pesanan lapangan!");
       }
+
+      let rincianList = [];
+      rows.forEach(row => {
+        const court = row.querySelector('.select-court').value;
+        const jam = row.querySelector('.select-jam').value;
+        rincianList.push(`${court} (${jam})`);
+      });
 
       const fileInput = document.getElementById('b-bukti');
       if (fileInput.files.length === 0) {
@@ -211,9 +239,9 @@
           id_member: m.id_member || '',
           nama: m.nama || document.getElementById('b-nama').value,
           no_hp: m.no_hp || document.getElementById('b-hp').value,
-          lokasi: `Padel Boss Mengger (${selectedCourts.join(', ')})`,
+          lokasi: `Padel Boss Mengger`,
           tanggal: document.getElementById('b-tanggal').value,
-          detail_jam: selectedJams.join(', '),
+          detail_jam: rincianList.join(', '),
           total_bayar: calculatedTotalBayar,
           poin_didapat: calculatedPoin,
           bukti_transfer: event.target.result
