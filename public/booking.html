@@ -25,7 +25,6 @@
           if (document.getElementById('status-member-hp')) {
             document.getElementById('status-member-hp').innerText = `ID: ${m.id_member} | ${m.nama}`;
           }
-          // Tambah 1 baris default saat halaman dimuat
           tambahBarisCourt();
         });
       } catch (e) {
@@ -78,10 +77,10 @@
         <input type="date" id="b-tanggal" required class="w-full border border-slate-300 p-2.5 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none">
       </div>
 
-      <!-- DAFTAR PILIHAN COURT & JAM (MULTI-COURT DENGAN PILIHAN BANYAK JAM) -->
+      <!-- DAFTAR PILIHAN COURT & JAM (VALIDASI UNIQUE COURT) -->
       <div class="space-y-2">
         <div class="flex justify-between items-center">
-          <label class="block font-bold text-slate-700 uppercase">Pilih Court & Jam Main (Bisa Pilih Banyak Jam Sekaligus)</label>
+          <label class="block font-bold text-slate-700 uppercase">Pilih Court & Jam Main (Court Tidak Boleh Sama)</label>
           <button type="button" onclick="tambahBarisCourt()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold transition">➕ Tambah Court Lain</button>
         </div>
         <div id="container-court-group" class="space-y-3">
@@ -135,6 +134,7 @@
       }
     }
 
+    const daftarCourt = ["Court 1", "Court 2", "Court 3", "Court 4", "Court 5"];
     const daftarJam = [
       "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", 
       "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"
@@ -143,6 +143,18 @@
     function tambahBarisCourt() {
       const container = document.getElementById('container-court-group');
       const rowId = Date.now();
+
+      // Cari court yang belum dipilih agar otomatis mencarikan pilihan yang tersedia
+      const selectedCourts = Array.from(document.querySelectorAll('.select-court')).map(sel => sel.value);
+      const availableCourt = daftarCourt.find(c => !selectedCourts.includes(c));
+
+      if (!availableCourt) {
+        return alert("Semua 5 Court sudah dipilih!");
+      }
+
+      let opsiCourtHTML = daftarCourt.map(c => `
+        <option value="${c}" ${c === availableCourt ? 'selected' : ''}>${c}</option>
+      `).join('');
 
       let checkboxesJam = daftarJam.map(j => `
         <label class="flex items-center space-x-1 cursor-pointer bg-white px-2 py-1 rounded border border-slate-200 hover:bg-slate-100">
@@ -156,12 +168,8 @@
       div.id = `group-${rowId}`;
       div.innerHTML = `
         <div class="flex justify-between items-center">
-          <select class="p-2 border rounded-lg bg-white font-bold text-slate-700 outline-none select-court" onchange="hitungTotal()">
-            <option value="Court 1">Court 1</option>
-            <option value="Court 2">Court 2</option>
-            <option value="Court 3">Court 3</option>
-            <option value="Court 4">Court 4</option>
-            <option value="Court 5">Court 5</option>
+          <select class="p-2 border rounded-lg bg-white font-bold text-slate-700 outline-none select-court" onchange="validasiDanHitung()">
+            ${opsiCourtHTML}
           </select>
           <button type="button" onclick="hapusBarisCourt('${rowId}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-2 py-1 rounded-lg text-[11px] font-bold transition">🗑️ Hapus Court Ini</button>
         </div>
@@ -173,7 +181,7 @@
         </div>
       `;
       container.appendChild(div);
-      hitungTotal();
+      validasiDanHitung();
     }
 
     function hapusBarisCourt(rowId) {
@@ -182,7 +190,34 @@
         return alert("Minimal harus ada 1 Court yang dipilih!");
       }
       document.getElementById(`group-${rowId}`).remove();
+      validasiDanHitung();
+    }
+
+    function validasiDanHitung() {
+      // Cek apakah ada court yang dipilih ganda
+      const courtSelects = document.querySelectorAll('.select-court');
+      let seenCourts = new Set();
+      let hasDuplicate = false;
+
+      courtSelects.forEach(sel => {
+        if (seenCourts.has(sel.value)) {
+          hasDuplicate = true;
+          sel.classList.add('border-rose-500', 'bg-rose-50');
+        } else {
+          seenCourts.add(sel.value);
+          sel.classList.remove('border-rose-500', 'bg-rose-50');
+        }
+      });
+
+      if (hasDuplicate) {
+        document.getElementById('info-rincian').innerText = "⚠️ Peringatan: Ada Court yang dipilih lebih dari 1 kali!";
+        document.getElementById('info-total-bayar').innerText = "Rp 0";
+        document.getElementById('info-poin-didapat').innerText = "+0 Poin";
+        return false;
+      }
+
       hitungTotal();
+      return true;
     }
 
     let calculatedTotalBayar = 0;
@@ -200,7 +235,6 @@
           totalJamCount++;
           const hour = parseInt(checkbox.value.split(':')[0], 10);
           
-          // Tarif: 06:00 - 18:00 = 69k (1 Poin), 19:00 - 22:00 = 129k (2 Poin)
           if (hour >= 6 && hour <= 18) {
             totalBayar += 69000;
             totalPoin += 1;
@@ -227,6 +261,11 @@
     async function kirimBooking(e) {
       e.preventDefault();
       
+      // Validasi duplikat court sebelum submit
+      if (!validasiDanHitung()) {
+        return alert("Terdapat pilihan Court yang sama/ganda. Mohon pilih Court yang berbeda!");
+      }
+
       const groups = document.querySelectorAll('.row-court-group');
       let rincianList = [];
 
