@@ -6,6 +6,8 @@
   <title>Dashboard Admin Absensi & Payroll - Padel</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Chart.js untuk Diagram Analitik -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
 
@@ -23,24 +25,94 @@
 <div class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
 
   <!-- Navigasi Tab Utama -->
-  <div class="flex space-x-2 border-b border-slate-300 pb-2">
-    <button onclick="switchTab('master')" id="tab-master" class="px-4 py-2 font-bold text-emerald-800 border-b-2 border-emerald-800 focus:outline-none">
-      👤 Data Staf, Rekening & Gaji
+  <div class="flex space-x-2 border-b border-slate-300 pb-2 overflow-x-auto">
+    <button onclick="switchTab('analytics')" id="tab-analytics" class="px-4 py-2 font-bold text-emerald-800 border-b-2 border-emerald-800 focus:outline-none whitespace-nowrap">
+      📊 Analitik & Diagram Presensi
     </button>
-    <button onclick="switchTab('payroll')" id="tab-payroll" class="px-4 py-2 font-bold text-slate-500 hover:text-emerald-800 focus:outline-none">
-      💵 Kalkulator Penggajian & Slip
+    <button onclick="switchTab('riwayat')" id="tab-riwayat" class="px-4 py-2 font-bold text-slate-500 hover:text-emerald-800 focus:outline-none whitespace-nowrap">
+      📅 Laporan Parent-Child (Tanggal)
     </button>
-    <button onclick="switchTab('riwayat')" id="tab-riwayat" class="px-4 py-2 font-bold text-slate-500 hover:text-emerald-800 focus:outline-none">
-      📍 Laporan Absensi & Kehadiran
+    <button onclick="switchTab('master')" id="tab-master" class="px-4 py-2 font-bold text-slate-500 hover:text-emerald-800 focus:outline-none whitespace-nowrap">
+      👤 Data Staf & Gaji
+    </button>
+    <button onclick="switchTab('payroll')" id="tab-payroll" class="px-4 py-2 font-bold text-slate-500 hover:text-emerald-800 focus:outline-none whitespace-nowrap">
+      💵 Kalkulator Penggajian
     </button>
   </div>
 
-  <!-- SECTION 1: MASTER DATA STAF & GAJI -->
-  <section id="section-master" class="space-y-4">
+  <!-- SECTION 0: ANALITIK & DIAGRAM PRESENSI (FITUR BARU) -->
+  <section id="section-analytics" class="space-y-6">
+    <!-- Ringkasan Kartu KPI -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-700">
+        <p class="text-xs text-slate-500 font-bold uppercase">Total Log Presensi</p>
+        <p class="text-2xl font-black text-slate-800 mt-1" id="kpi-total-absen">0</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-600">
+        <p class="text-xs text-slate-500 font-bold uppercase">Absensi Valid (In & Out)</p>
+        <p class="text-2xl font-black text-emerald-700 mt-1" id="kpi-valid">0</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500">
+        <p class="text-xs text-slate-500 font-bold uppercase">Absen Masih Aktif (Belum Out)</p>
+        <p class="text-2xl font-black text-amber-600 mt-1" id="kpi-aktif">0</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-600">
+        <p class="text-xs text-slate-500 font-bold uppercase">Lokasi Teraktif</p>
+        <p class="text-base font-bold text-indigo-900 mt-1 truncate" id="kpi-lokasi-top">-</p>
+      </div>
+    </div>
+
+    <!-- Grafik Diagram -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Diagram Tren Harian -->
+      <div class="bg-white p-5 rounded-xl shadow-sm space-y-2">
+        <h3 class="text-sm font-bold text-slate-800">📈 Tren Kehadiran per Tanggal</h3>
+        <div class="h-64 relative">
+          <canvas id="chartTrend"></canvas>
+        </div>
+      </div>
+      <!-- Diagram Distribusi Lokasi & Shift -->
+      <div class="bg-white p-5 rounded-xl shadow-sm space-y-2">
+        <h3 class="text-sm font-bold text-slate-800">🍩 Distribusi Absensi per Lokasi</h3>
+        <div class="h-64 relative flex justify-center">
+          <canvas id="chartLokasi"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 1: LAPORAN PARENT-CHILD BERSARKAN TANGGAL (FITUR BARU) -->
+  <section id="section-riwayat" class="space-y-4 hidden">
+    <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800">Laporan Riwayat Presensi (Parent-Child)</h2>
+        <p class="text-xs text-slate-500">Klik pada baris tanggal (Parent) untuk melihat detail absensi karyawan (Child).</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <select id="filter-lokasi" onchange="renderParentChildRiwayat()" class="border p-2 rounded text-xs bg-slate-50">
+          <option value="semua">Semua Lokasi</option>
+          <option value="Padel Del Luna">Padel Del Luna</option>
+          <option value="Padel Boss Mengger">Padel Boss Mengger</option>
+        </select>
+        <button onclick="exportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded text-xs font-bold">
+          📊 Export Excel (.xlsx)
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+      <div id="container-parent-child" class="divide-y divide-slate-200 text-sm">
+        <div class="p-4 text-center text-slate-500">Memuat data riwayat...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: MASTER DATA STAF & GAJI -->
+  <section id="section-master" class="space-y-4 hidden">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
       <div>
         <h2 class="text-lg font-bold text-slate-800">Master Data Staf</h2>
-        <p class="text-xs text-slate-500">Klik tombol di kanan untuk menambah staf atau memperbarui data gaji/rekening.</p>
+        <p class="text-xs text-slate-500">Tambah staf atau perbarui data rekening & nominal komponen gaji dasar.</p>
       </div>
       <button onclick="bukaModalKaryawan()" class="bg-[#1b4d3e] hover:bg-[#14382d] text-white px-4 py-2 rounded-lg text-sm font-bold transition">
         + Tambah Staf Baru
@@ -65,7 +137,7 @@
     </div>
   </section>
 
-  <!-- SECTION 2: KALKULATOR GAJI & SLIP GAJI -->
+  <!-- SECTION 3: KALKULATOR GAJI & SLIP GAJI -->
   <section id="section-payroll" class="space-y-4 hidden">
     <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
       <h2 class="text-lg font-bold text-slate-800">Kalkulator Take Home Pay (THP) Gaji Periode</h2>
@@ -104,43 +176,6 @@
         </thead>
         <tbody id="tb-payroll" class="divide-y divide-slate-200">
           <tr><td colspan="6" class="p-4 text-center text-slate-500">Klik "Hitung Gaji Periode" di atas...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- SECTION 3: LAPORAN ABSENSI & EXPORT -->
-  <section id="section-riwayat" class="space-y-4 hidden">
-    <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div>
-        <h2 class="text-lg font-bold text-slate-800">Laporan Riwayat Presensi</h2>
-        <p class="text-xs text-slate-500">Filter lokasi & unduh laporan kehadiran ke Excel.</p>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <select id="filter-lokasi" onchange="muatRiwayat()" class="border p-2 rounded text-xs bg-slate-50">
-          <option value="semua">Semua Lokasi</option>
-          <option value="Padel Del Luna">Padel Del Luna</option>
-          <option value="Padel Boss Mengger">Padel Boss Mengger</option>
-        </select>
-        <button onclick="exportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded text-xs font-bold">
-          📊 Export Excel (.xlsx)
-        </button>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
-      <table class="w-full text-left text-sm">
-        <thead class="bg-slate-800 text-white uppercase text-xs">
-          <tr>
-            <th class="p-3">Staf</th>
-            <th class="p-3">Lokasi & Shift</th>
-            <th class="p-3">Tanggal</th>
-            <th class="p-3">Clock In</th>
-            <th class="p-3">Clock Out</th>
-          </tr>
-        </thead>
-        <tbody id="tb-riwayat" class="divide-y divide-slate-200">
-          <tr><td colspan="5" class="p-4 text-center text-slate-500">Memuat riwayat...</td></tr>
         </tbody>
       </table>
     </div>
@@ -201,20 +236,194 @@
 <script>
   let dataStafGlobal = [];
   let dataRiwayatGlobal = [];
+  let chartTrendInstance = null;
+  let chartLokasiInstance = null;
 
   function switchTab(tab) {
-    ['master', 'payroll', 'riwayat'].forEach(t => {
+    ['analytics', 'riwayat', 'master', 'payroll'].forEach(t => {
       document.getElementById(`section-${t}`).classList.add('hidden');
-      document.getElementById(`tab-${t}`).className = "px-4 py-2 font-bold text-slate-500 hover:text-emerald-800 focus:outline-none";
+      document.getElementById(`tab-${t}`).className = "px-4 py-2 font-bold text-slate-500 hover:text-emerald-800 focus:outline-none whitespace-nowrap";
     });
     document.getElementById(`section-${tab}`).classList.remove('hidden');
-    document.getElementById(`tab-${tab}`).className = "px-4 py-2 font-bold text-emerald-800 border-b-2 border-emerald-800 focus:outline-none";
+    document.getElementById(`tab-${tab}`).className = "px-4 py-2 font-bold text-emerald-800 border-b-2 border-emerald-800 focus:outline-none whitespace-nowrap";
 
+    if (tab === 'analytics') muatDashboardAnalitik();
+    if (tab === 'riwayat') renderParentChildRiwayat();
     if (tab === 'master') muatStaf();
     if (tab === 'payroll') initPayrollDates();
-    if (tab === 'riwayat') muatRiwayat();
   }
 
+  // ================= ANALITIK & DIAGRAM =================
+  async function muatDashboardAnalitik() {
+    const res = await fetch('/api/riwayat');
+    dataRiwayatGlobal = await res.json();
+
+    // 1. Hitung Kartu KPI
+    const totalLog = dataRiwayatGlobal.length;
+    const validCount = dataRiwayatGlobal.filter(r => r.clock_in && r.clock_out).length;
+    const aktifCount = dataRiwayatGlobal.filter(r => r.clock_in && !r.clock_out).length;
+
+    document.getElementById('kpi-total-absen').innerText = totalLog;
+    document.getElementById('kpi-valid').innerText = validCount;
+    document.getElementById('kpi-aktif').innerText = aktifCount;
+
+    // Hitung Lokasi Teraktif
+    const countsLokasi = {};
+    dataRiwayatGlobal.forEach(r => {
+      const loc = r.lokasi || 'Tidak Terdeteksi';
+      countsLokasi[loc] = (countsLokasi[loc] || 0) + 1;
+    });
+    let topLokasi = '-';
+    let maxCount = 0;
+    for (const [key, val] of Object.entries(countsLokasi)) {
+      if (val > maxCount) { maxCount = val; topLokasi = key; }
+    }
+    document.getElementById('kpi-lokasi-top').innerText = topLokasi;
+
+    // 2. Render Diagram Tren Harian (Line Chart)
+    const countsTanggal = {};
+    dataRiwayatGlobal.forEach(r => {
+      if (r.tanggal) {
+        const dateStr = new Date(r.tanggal).toISOString().split('T')[0];
+        countsTanggal[dateStr] = (countsTanggal[dateStr] || 0) + 1;
+      }
+    });
+
+    const sortedDates = Object.keys(countsTanggal).sort();
+    const dataCounts = sortedDates.map(d => countsTanggal[d]);
+
+    if (chartTrendInstance) chartTrendInstance.destroy();
+    const ctxTrend = document.getElementById('chartTrend').getContext('2d');
+    chartTrendInstance = new Chart(ctxTrend, {
+      type: 'line',
+      data: {
+        labels: sortedDates.map(d => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })),
+        datasets: [{
+          label: 'Jumlah Kehadiran',
+          data: dataCounts,
+          borderColor: '#1b4d3e',
+          backgroundColor: 'rgba(27, 77, 62, 0.1)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 3,
+          pointRadius: 4
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // 3. Render Diagram Doughnut Lokasi
+    if (chartLokasiInstance) chartLokasiInstance.destroy();
+    const ctxLokasi = document.getElementById('chartLokasi').getContext('2d');
+    chartLokasiInstance = new Chart(ctxLokasi, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(countsLokasi),
+        datasets: [{
+          data: Object.values(countsLokasi),
+          backgroundColor: ['#1b4d3e', '#d99e12', '#2563eb', '#dc2626']
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  }
+
+  // ================= TAMPILAN PARENT-CHILD (TANGGAL) =================
+  async function renderParentChildRiwayat() {
+    if (dataRiwayatGlobal.length === 0) {
+      const res = await fetch('/api/riwayat');
+      dataRiwayatGlobal = await res.json();
+    }
+
+    const filter = document.getElementById('filter-lokasi').value;
+    let list = dataRiwayatGlobal;
+    if (filter !== 'semua') list = dataRiwayatGlobal.filter(d => d.lokasi === filter);
+
+    // Grouping berdasarkan Tanggal (Parent)
+    const grouped = {};
+    list.forEach(item => {
+      const tglKey = item.tanggal ? new Date(item.tanggal).toISOString().split('T')[0] : 'Lainnya';
+      if (!grouped[tglKey]) grouped[tglKey] = [];
+      grouped[tglKey].push(item);
+    });
+
+    const sortedDates = Object.keys(grouped).sort().reverse();
+    const container = document.getElementById('container-parent-child');
+
+    if (sortedDates.length === 0) {
+      container.innerHTML = `<div class="p-4 text-center text-slate-400">Tidak ada data absensi.</div>`;
+      return;
+    }
+
+    container.innerHTML = sortedDates.map((tgl, index) => {
+      const items = grouped[tgl];
+      const validInDate = items.filter(i => i.clock_in && i.clock_out).length;
+      const formattedDate = tgl !== 'Lainnya' ? new Date(tgl).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Tanggal Tidak Valid';
+
+      return `
+        <div class="bg-white">
+          <!-- BARIS PARENT (TANGGAL) -->
+          <div onclick="toggleChild('child-${index}')" class="p-3.5 bg-slate-50 hover:bg-emerald-50/50 cursor-pointer flex justify-between items-center transition select-none border-b border-slate-200">
+            <div class="flex items-center space-x-3">
+              <span id="icon-child-${index}" class="text-xs text-slate-500 font-bold transition-transform">►</span>
+              <div>
+                <span class="font-bold text-slate-800 text-sm">${formattedDate}</span>
+                <span class="text-xs text-slate-500 ml-2">(${items.length} Staf Abesn)</span>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded font-bold">${validInDate} Valid</span>
+              <span class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded font-semibold">${items.length - validInDate} Aktif/Incomplete</span>
+            </div>
+          </div>
+
+          <!-- BARIS CHILD (DETAIL ABSEN KARYAWAN) -->
+          <div id="child-${index}" class="hidden bg-slate-100/60 p-3 space-y-2 border-b border-slate-200">
+            <table class="w-full text-left text-xs bg-white rounded-lg overflow-hidden shadow-sm border border-slate-200">
+              <thead class="bg-slate-800 text-white font-bold">
+                <tr>
+                  <th class="p-2.5">Staf</th>
+                  <th class="p-2.5">Lokasi & Shift</th>
+                  <th class="p-2.5">Clock In</th>
+                  <th class="p-2.5">Clock Out</th>
+                  <th class="p-2.5">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                ${items.map(child => `
+                  <tr class="hover:bg-slate-50">
+                    <td class="p-2.5 font-bold">${child.nama}<br><span class="text-[10px] text-slate-500 font-normal">${child.id_karyawan}</span></td>
+                    <td class="p-2.5"><b class="text-emerald-800">${child.lokasi}</b><br><span class="text-slate-500">${child.shift || '-'}</span></td>
+                    <td class="p-2.5 text-emerald-700 font-bold">${child.clock_in ? new Date(child.clock_in).toLocaleTimeString('id-ID') : '-'}</td>
+                    <td class="p-2.5 text-rose-700 font-bold">${child.clock_out ? new Date(child.clock_out).toLocaleTimeString('id-ID') : 'Masih Aktif'}</td>
+                    <td class="p-2.5">
+                      ${child.clock_in && child.clock_out 
+                        ? `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">Lengkap</span>` 
+                        : `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px]">Aktif</span>`}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function toggleChild(id) {
+    const el = document.getElementById(id);
+    const icon = document.getElementById('icon-' + id);
+    if (el.classList.contains('hidden')) {
+      el.classList.remove('hidden');
+      if (icon) icon.style.transform = 'rotate(90deg)';
+    } else {
+      el.classList.add('hidden');
+      if (icon) icon.style.transform = 'rotate(0deg)';
+    }
+  }
+
+  // ================= FUNGSI MASTER STAF & GAJI =================
   async function muatStaf() {
     try {
       const res = await fetch('/api/gaji-lengkap');
@@ -311,6 +520,7 @@
     }
   }
 
+  // ================= KALKULATOR GAJI =================
   function initPayrollDates() {
     const now = new Date();
     document.getElementById('p-start').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -333,17 +543,14 @@
 
     const tbody = document.getElementById('tb-payroll');
     tbody.innerHTML = dataStafGlobal.map(k => {
-      // Filter absensi karyawan dalam periode
       const userAbsen = absensi.filter(a => 
         (a.id_karyawan === k.id_karyawan || a.nama === k.nama) && 
         a.tanggal >= start && a.tanggal <= end
       );
 
-      // 1. HITUNG HARI KERJA VALID (Harus ada Clock In DAN Clock Out)
       const absenValid = userAbsen.filter(a => a.clock_in && a.clock_out);
       const totalHadirValid = absenValid.length;
 
-      // 2. HITUNG HADIR WEEKEND (Sabtu & Minggu dari absen valid)
       let hadirWeekend = 0;
       absenValid.forEach(a => {
         if (a.tanggal) {
@@ -352,12 +559,10 @@
         }
       });
 
-      // 3. HITUNG TUNJANGAN TRANSPORT (Plafon 300rb, potong 10rb/hari jika absen)
       const hariAlpa = Math.max(0, targetHari - totalHadirValid);
       const potonganTransport = hariAlpa * 10000;
       const tnjTransportNett = Math.max(0, 300000 - potonganTransport);
 
-      // 4. HITUNG GAJI POKOK PROPORSIONAL & BONUS KEHADIRAN
       const gapokProporsional = totalHadirValid >= targetHari 
         ? Number(k.gaji_pokok || 0) 
         : (Number(k.gaji_pokok || 0) / targetHari) * totalHadirValid;
@@ -365,7 +570,6 @@
       const nominalWeekend = hadirWeekend * (Number(k.tunjangan_weekend) || 25000);
       const bonusHadir = totalHadirValid >= targetHari ? Number(k.bonus_kehadiran || 0) : 0;
 
-      // 5. TOTAL TAKE HOME PAY (THP)
       const thp = gapokProporsional + nominalWeekend + bonusHadir + tnjTransportNett;
 
       return `
@@ -404,7 +608,7 @@
         .text-right { text-align: right; }
       </style>
       <div class="header">
-        <h2>CV Berkat Untuk Sesama</h2>
+        <h2>PADEL CLUB MANAGEMENT</h2>
         <p>SLIP GAJI STAF - PERIODE ${new Date().toLocaleDateString('id-ID', {month:'long', year:'numeric'})}</p>
       </div>
       <p><b>ID / Nama:</b> ${k.id_karyawan} - ${k.nama}<br><b>Bank:</b> ${k.nama_bank || '-'} (${k.no_rekening || '-'})</p>
@@ -439,23 +643,6 @@
     w.document.close();
   }
 
-  async function muatRiwayat() {
-    const res = await fetch('/api/riwayat');
-    dataRiwayatGlobal = await res.json();
-    const filter = document.getElementById('filter-lokasi').value;
-    let list = dataRiwayatGlobal;
-    if (filter !== 'semua') list = dataRiwayatGlobal.filter(d => d.lokasi === filter);
-    document.getElementById('tb-riwayat').innerHTML = list.map(r => `
-      <tr>
-        <td class="p-3 font-bold">${r.nama}<br><span class="text-xs text-slate-500">${r.id_karyawan}</span></td>
-        <td class="p-3 text-xs"><b class="text-emerald-700">${r.lokasi}</b><br>${r.shift || '-'}</td>
-        <td class="p-3 text-xs">${r.tanggal ? new Date(r.tanggal).toLocaleDateString('id-ID') : '-'}</td>
-        <td class="p-3 text-xs font-bold text-emerald-600">${r.clock_in ? new Date(r.clock_in).toLocaleTimeString('id-ID') : '-'}</td>
-        <td class="p-3 text-xs font-bold text-rose-600">${r.clock_out ? new Date(r.clock_out).toLocaleTimeString('id-ID') : 'Aktif'}</td>
-      </tr>
-    `).join('');
-  }
-
   function exportExcel() {
     const ws = XLSX.utils.json_to_sheet(dataRiwayatGlobal);
     const wb = XLSX.utils.book_new();
@@ -468,7 +655,7 @@
     window.location.href = '/login.html';
   }
 
-  window.onload = () => { muatStaf(); };
+  window.onload = () => { muatDashboardAnalitik(); };
 </script>
 </body>
 </html>

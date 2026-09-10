@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Lapangan & Poin Member - Padel Boss Mengger</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Proteksi Halaman Booking: Cek Sesi Member
+    const savedMember = localStorage.getItem('member_padel');
+    if (!savedMember) {
+      window.location.replace('/login-member.html');
+    } else {
+      try {
+        const m = JSON.parse(savedMember);
+        window.addEventListener('DOMContentLoaded', () => {
+          const inputHp = document.getElementById('b-hp');
+          if (inputHp) {
+            inputHp.value = m.no_hp || '';
+            inputHp.readOnly = true;
+          }
+          if (m.nama && m.nama !== 'Member Padel') {
+            const inputNama = document.getElementById('b-nama');
+            if (inputNama) inputNama.value = m.nama;
+          }
+          const infoPoin = document.getElementById('info-total-poin');
+          if (infoPoin) infoPoin.innerText = `${m.total_poin || 0} Poin`;
+          const statusHp = document.getElementById('status-member-hp');
+          if (statusHp) statusHp.innerText = `Login sebagai: ${m.nama}`;
+        });
+      } catch (e) {
+        localStorage.removeItem('member_padel');
+        window.location.replace('/login-member.html');
+      }
+    }
+  </script>
+</head>
+<body class="bg-gradient-to-br from-[#1b4d3e] via-[#2c5e4a] to-[#d99e12] min-h-screen flex items-center justify-center p-4 font-sans text-slate-800">
+
+  <div class="w-full max-w-lg bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-amber-200/40 p-6 space-y-4 my-4">
+    
+    <div class="flex justify-between items-center border-b pb-3">
+      <div>
+        <span class="text-[10px] font-bold tracking-widest text-[#d99e12] uppercase block">CUSTOMER BOOKING & REWARD PORTAL</span>
+        <h1 class="text-lg font-black text-[#1b4d3e]">Padel Boss Mengger</h1>
+        <p class="text-xs text-slate-500">ID Booking: <span id="label-id-booking" class="font-bold text-amber-600">Memuat...</span></p>
+      </div>
+      <button onclick="logoutMember()" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+        🚪 Logout
+      </button>
+    </div>
+
+    <!-- KARTU INFORMASI POIN MEMBER -->
+    <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl flex justify-between items-center">
+      <div>
+        <p class="text-[11px] font-bold text-amber-900">Total Poin Member Anda:</p>
+        <p class="text-[10px] text-amber-700" id="status-member-hp">Memuat status member...</p>
+      </div>
+      <div class="text-right">
+        <span class="text-base font-black text-amber-800" id="info-total-poin">0 Poin</span>
+      </div>
+    </div>
+
+    <form onsubmit="kirimBooking(event)" class="space-y-3 text-xs">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Nama Pemesan</label>
+          <input type="text" id="b-nama" required placeholder="Nama lengkap" class="w-full border border-slate-300 p-2.5 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">No. WhatsApp / HP</label>
+          <input type="text" id="b-hp" required class="w-full border border-slate-200 p-2.5 rounded-xl bg-slate-100 font-bold text-slate-600 outline-none" readonly>
+        </div>
+      </div>
+
+      <!-- PILIHAN MULTI-COURT (CHECKBOX 1 s/d 5) -->
+      <div>
+        <label class="block font-bold text-slate-700 uppercase mb-1">Pilih Court (Bisa Pilih Lebih dari 1)</label>
+        <div class="grid grid-cols-5 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="court" value="Court 1" onchange="hitungTotal()" class="rounded"> <span>Court 1</span></label>
+          <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="court" value="Court 2" onchange="hitungTotal()" class="rounded"> <span>Court 2</span></label>
+          <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="court" value="Court 3" onchange="hitungTotal()" class="rounded"> <span>Court 3</span></label>
+          <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="court" value="Court 4" onchange="hitungTotal()" class="rounded"> <span>Court 4</span></label>
+          <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="court" value="Court 5" onchange="hitungTotal()" class="rounded"> <span>Court 5</span></label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Tanggal Main</label>
+          <input type="date" id="b-tanggal" required class="w-full border border-slate-300 p-2.5 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Jam Main (Bisa Pilih Lebih dari 1 Jam)</label>
+          <div class="grid grid-cols-4 gap-1 bg-slate-50 p-2 rounded-xl border border-slate-200 max-h-32 overflow-y-auto">
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="06:00" onchange="hitungTotal()" class="rounded"> <span>06:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="07:00" onchange="hitungTotal()" class="rounded"> <span>07:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="08:00" onchange="hitungTotal()" class="rounded"> <span>08:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="09:00" onchange="hitungTotal()" class="rounded"> <span>09:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="10:00" onchange="hitungTotal()" class="rounded"> <span>10:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="11:00" onchange="hitungTotal()" class="rounded"> <span>11:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="12:00" onchange="hitungTotal()" class="rounded"> <span>12:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="13:00" onchange="hitungTotal()" class="rounded"> <span>13:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="14:00" onchange="hitungTotal()" class="rounded"> <span>14:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="15:00" onchange="hitungTotal()" class="rounded"> <span>15:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="16:00" onchange="hitungTotal()" class="rounded"> <span>16:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="17:00" onchange="hitungTotal()" class="rounded"> <span>17:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="18:00" onchange="hitungTotal()" class="rounded"> <span>18:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="19:00" onchange="hitungTotal()" class="rounded"> <span>19:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="20:00" onchange="hitungTotal()" class="rounded"> <span>20:00</span></label>
+            <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" name="jam" value="21:00" onchange="hitungTotal()" class="rounded"> <span>21:00</span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- KARTU RINCIAN TOTAL & POIN -->
+      <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex justify-between items-center">
+        <div>
+          <p class="text-[11px] font-bold text-emerald-800">Rincian Pembayaran & Poin:</p>
+          <p class="text-[10px] text-slate-600" id="info-rincian">0 Court dipilih × 0 Jam dipilih</p>
+        </div>
+        <div class="text-right">
+          <span class="text-base font-black text-emerald-700 block" id="info-total-bayar">Rp 0</span>
+          <span class="text-[11px] font-bold text-amber-600 block" id="info-poin-didapat">+0 Poin</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-700 uppercase mb-1">Upload Bukti Transfer Pembayaran</label>
+        <input type="file" id="b-bukti" accept="image/*" required class="w-full border border-slate-300 p-2 rounded-xl bg-slate-50 text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#1b4d3e] file:text-white hover:file:bg-[#14382d] cursor-pointer">
+      </div>
+
+      <button type="submit" class="w-full bg-[#1b4d3e] hover:bg-[#14382d] text-white py-3 rounded-xl font-bold text-sm shadow-md transition mt-2">
+        Kirim Booking & Klaim Poin
+      </button>
+    </form>
+  </div>
+
+  <script>
+    let generatedIdBooking = "";
+    document.getElementById('b-tanggal').value = new Date().toISOString().split('T')[0];
+
+    async function loadNextBookingId() {
+      try {
+        const res = await fetch('/api/booking/next-id');
+        const data = await res.json();
+        generatedIdBooking = data.id_booking;
+        document.getElementById('label-id-booking').innerText = generatedIdBooking;
+      } catch (err) {
+        generatedIdBooking = "BKG-GENERAL";
+        document.getElementById('label-id-booking').innerText = generatedIdBooking;
+      }
+    }
+
+    let calculatedTotalBayar = 0;
+    let calculatedPoin = 0;
+
+    function hitungTotal() {
+      const selectedCourts = document.querySelectorAll('input[name="court"]:checked');
+      const selectedJams = document.querySelectorAll('input[name="jam"]:checked');
+
+      let totalBayar = 0;
+      let totalPoin = 0;
+
+      selectedCourts.forEach(court => {
+        selectedJams.forEach(jam => {
+          const hour = parseInt(jam.value.split(':')[0], 10);
+          if (hour >= 6 && hour <= 18) {
+            totalBayar += 69000;
+            totalPoin += 1;
+          } else {
+            totalBayar += 129000;
+            totalPoin += 2;
+          }
+        });
+      });
+
+      calculatedTotalBayar = totalBayar;
+      calculatedPoin = totalPoin;
+
+      document.getElementById('info-rincian').innerText = `${selectedCourts.length} Court × ${selectedJams.length} Jam dipilih`;
+      document.getElementById('info-total-bayar').innerText = `Rp ${totalBayar.toLocaleString('id-ID')}`;
+      document.getElementById('info-poin-didapat').innerText = `+${totalPoin} Poin`;
+    }
+
+    function logoutMember() {
+      localStorage.removeItem('member_padel');
+      window.location.replace('/login-member.html');
+    }
+
+    async function kirimBooking(e) {
+      e.preventDefault();
+      
+      const selectedCourts = Array.from(document.querySelectorAll('input[name="court"]:checked')).map(c => c.value);
+      const selectedJams = Array.from(document.querySelectorAll('input[name="jam"]:checked')).map(j => j.value);
+
+      if (selectedCourts.length === 0 || selectedJams.length === 0) {
+        return alert("Mohon pilih minimal 1 Court dan 1 Jam main!");
+      }
+
+      const fileInput = document.getElementById('b-bukti');
+      if (fileInput.files.length === 0) {
+        return alert("Mohon upload bukti transfer pembayaran!");
+      }
+
+      const reader = new FileReader();
+      reader.onload = async function(event) {
+        const payload = {
+          id_booking: generatedIdBooking,
+          nama: document.getElementById('b-nama').value,
+          no_hp: document.getElementById('b-hp').value,
+          lokasi: `Padel Boss Mengger (${selectedCourts.join(', ')})`,
+          tanggal: document.getElementById('b-tanggal').value,
+          detail_jam: selectedJams.join(', '),
+          total_bayar: calculatedTotalBayar,
+          poin_didapat: calculatedPoin,
+          bukti_transfer: event.target.result
+        };
+
+        try {
+          const res = await fetch('/api/booking', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          
+          const result = await res.json();
+          if (!res.ok) throw new Error(result.error || "Gagal mengirim booking");
+
+          // Update lokal poin member
+          try {
+            const m = JSON.parse(localStorage.getItem('member_padel') || '{}');
+            m.total_poin = (m.total_poin || 0) + calculatedPoin;
+            localStorage.setItem('member_padel', JSON.stringify(m));
+          } catch(e){}
+
+          alert(`✅ Booking ID (${generatedIdBooking}) berhasil disimpan! Total: Rp ${calculatedTotalBayar.toLocaleString('id-ID')} (+${calculatedPoin} Poin). Admin akan segera memverifikasi.`);
+          location.reload();
+        } catch (err) {
+          alert("❌ Error: " + err.message);
+        }
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadNextBookingId();
+    });
+  </script>
+</body>
+</html>
