@@ -107,6 +107,28 @@ async function initDB() {
         waktu VARCHAR(20)
       );
 
+      CREATE TABLE IF NOT EXISTS booking_lapangan (
+        id SERIAL PRIMARY KEY,
+        id_booking VARCHAR(50) UNIQUE NOT NULL,
+        nama VARCHAR(100) NOT NULL,
+        no_hp VARCHAR(30) NOT NULL,
+        lokasi TEXT NOT NULL,
+        tanggal DATE NOT NULL,
+        detail_jam TEXT NOT NULL,
+        total_bayar NUMERIC DEFAULT 0,
+        poin_didapat INTEGER DEFAULT 0,
+        bukti_transfer TEXT,
+        status VARCHAR(20) DEFAULT 'Pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS member_poin (
+        no_hp VARCHAR(30) PRIMARY KEY,
+        nama VARCHAR(100) NOT NULL,
+        total_poin INTEGER DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
       INSERT INTO karyawan (id_karyawan, nama, no_hp, tgl_join, role) 
       VALUES ('ADMIN', 'Administrator', '081111111111', '2026-01-01', 'admin')
       ON CONFLICT (id_karyawan) DO UPDATE SET role = 'admin';
@@ -120,6 +142,7 @@ initDB();
 
 // ================= API ENDPOINTS =================
 
+// Karyawan & Payroll
 app.get('/api/karyawan', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM karyawan ORDER BY id_karyawan ASC');
@@ -210,7 +233,7 @@ app.post('/api/gaji-rekening', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Absen Clock In (Real-time & Tanggal Hari Ini)
+// Absen Clock In (Real-time & Tanggal Hari Ini, Radius 100m)
 app.post('/api/clock-in', async (req, res) => {
   const { id_karyawan, kode_lokasi, shift, user_lat, user_lng, foto } = req.body;
   const targetLokasi = LOKASI_PADEL[kode_lokasi || 'del_luna'];
@@ -252,6 +275,68 @@ app.post('/api/clock-out', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// API Booking Customer & Poin Member (Multi-Court & Multi-Hour)
+app.get('/api/booking/next-id', async (req, res) => {
+  try {
+    const todayStr = getTanggalLokal().replace(/-/g, '');
+    const result = await pool.query(`SELECT id_booking FROM booking_lapangan WHERE id_booking LIKE 'BKG-${todayStr}-%' ORDER BY id DESC LIMIT 1`);
+    let nextNum = 1;
+    if (result.rows.length > 0) {
+      const parts = result.rows[0].id_booking.split('-');
+      const lastNum = parseInt(parts[2], 10);
+      if (!isNaN(lastNum)) nextNum = lastNum + 1;
+    }
+    res.json({ id_booking: `BKG-${todayStr}-${String(nextNum).padStart(3, '0')}` });
+  } catch (err) {
+    res.json({ id_booking: `BKG-GENERAL-001` });
+  }
+});
+
+app.post('/api/booking', async (req, res) => {
+  const { id_booking, nama, no_hp, lokasi, tanggal, detail_jam, total_bayar, poin_didapat, bukti_transfer } = req.body;
+  try {
+    await pool.query(`
+      INSERT INTO booking_lapangan (id_booking, nama, no_hp, lokasi, tanggal, detail_jam, total_bayar, poin_didapat, bukti_transfer) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `, [id_booking || 'BKG-GENERAL', nama, no_hp, lokasi, tanggal, detail_jam, total_bayar || 0, poin_didapat || 0, bukti_transfer || '']);
+
+    await pool.query(`
+      INSERT INTO member_poin (no_hp, nama, total_poin, updated_at) 
+      VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+      ON CONFLICT (no_hp) DO UPDATE SET 
+        nama = EXCLUDED.nama,
+        total_poin = member_poin.total_poin + EXCLUDED.total_poin,
+        updated_at = CURRENT_TIMESTAMP;
+    `, [no_hp, nama, poin_didapat || 0]);
+
+    res.json({ message: 'Booking berhasil disimpan & Poin berhasil ditambahkan!' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/booking', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM booking_lapangan ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/member-poin/:hp', async (req, res) => {
+  try {
+    const { hp } = req.params;
+    const result = await pool.query('SELECT * FROM member_poin WHERE no_hp = $1', [hp]);
+    if (result.rows.length === 0) {
+      return res.json({ total_poin: 0 });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/riwayat', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -273,8 +358,12 @@ app.get('/index', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')
 app.get('/index.html', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login.html')));
 app.get('/login.html', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login.html')));
+app.get('/login-member', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login-member.html')));
+app.get('/login-member.html', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login-member.html')));
+app.get('/booking', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'booking.html')));
+app.get('/booking.html', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'booking.html')));
 app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login.html')));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server Absensi Padel Aktif di Port ${PORT}`);
+  console.log(`🚀 Server Absensi & Booking Padel Aktif di Port ${PORT}`);
 });
