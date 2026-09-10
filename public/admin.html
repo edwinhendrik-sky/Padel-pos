@@ -8,44 +8,53 @@
 </head>
 <body class="bg-slate-100 min-h-screen font-sans text-slate-800 flex flex-col md:flex-row">
 
-  <!-- SIDEBAR NAVIGATION -->
-  <aside class="w-full md:w-64 bg-[#1b4d3e] text-white flex flex-col justify-between shadow-xl md:min-h-screen sticky top-0 z-50">
-    <div class="p-6 space-y-6">
-      <div class="border-b border-emerald-800 pb-4">
-        <span class="text-[10px] font-bold tracking-widest text-[#d99e12] uppercase block">ADMINISTRATOR PORTAL</span>
-        <h1 class="text-base font-black tracking-tight mt-0.5">Padel Boss & Del Luna</h1>
+  <!-- SIDEBAR NAVIGATION (COLLAPSIBLE) -->
+  <aside id="sidebar" class="w-20 md:w-64 bg-[#1b4d3e] text-white flex flex-col justify-between shadow-xl md:min-h-screen sticky top-0 z-50 transition-all duration-300">
+    <div class="p-4 md:p-6 space-y-6">
+      
+      <!-- BRANDING & TOGGLE BUTTON -->
+      <div class="flex items-center justify-between border-b border-emerald-800 pb-4">
+        <div id="sidebar-brand" class="overflow-hidden transition-all">
+          <span class="text-[9px] font-bold tracking-widest text-[#d99e12] uppercase block">ADMIN PORTAL</span>
+          <h1 class="text-sm md:text-base font-black tracking-tight mt-0.5 whitespace-nowrap">Padel Boss & Del Luna</h1>
+        </div>
+        <button onclick="toggleSidebar()" class="p-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-900 text-emerald-200 transition" title="Toggle Sidebar">
+          ☰
+        </button>
       </div>
 
-      <nav class="space-y-1 text-xs font-bold">
-        <button onclick="switchTab('tab-booking')" id="btn-tab-booking" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-emerald-900/80 text-white transition">
-          <span class="text-base">📅</span>
-          <span>Data Booking</span>
+      <!-- MENU LIST (SHORTCUT ICON + TEXT) -->
+      <nav class="space-y-1.5 text-xs font-bold">
+        <button onclick="switchTab('tab-booking')" id="btn-tab-booking" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl bg-emerald-900/80 text-white transition group" title="Data Booking">
+          <span class="text-base shrink-0">📅</span>
+          <span class="sidebar-text truncate">Data Booking</span>
         </button>
-        <button onclick="switchTab('tab-member')" id="btn-tab-member" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition">
-          <span class="text-base">👥</span>
-          <span>Database Member</span>
+        <button onclick="switchTab('tab-member')" id="btn-tab-member" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition group" title="Database Member">
+          <span class="text-base shrink-0">👥</span>
+          <span class="sidebar-text truncate">Database Member</span>
         </button>
-        <button onclick="switchTab('tab-absensi')" id="btn-tab-absensi" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition">
-          <span class="text-base">📍</span>
-          <span>Rekap Absensi</span>
+        <button onclick="switchTab('tab-absensi')" id="btn-tab-absensi" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition group" title="Rekap Absensi">
+          <span class="text-base shrink-0">📍</span>
+          <span class="sidebar-text truncate">Rekap Absensi</span>
         </button>
-        <button onclick="switchTab('tab-karyawan')" id="btn-tab-karyawan" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition">
-          <span class="text-base">💰</span>
-          <span>Master Karyawan & Gaji</span>
+        <button onclick="switchTab('tab-karyawan')" id="btn-tab-karyawan" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition group" title="Master Karyawan">
+          <span class="text-base shrink-0">💰</span>
+          <span class="sidebar-text truncate">Master Karyawan & Gaji</span>
         </button>
-        <button onclick="switchTab('tab-payroll')" id="btn-tab-payroll" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition">
-          <span class="text-base">🧮</span>
-          <span>Kalkulator & Slip Gaji</span>
+        <button onclick="switchTab('tab-payroll')" id="btn-tab-payroll" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition group" title="Kalkulator & Slip Gaji">
+          <span class="text-base shrink-0">🧮</span>
+          <span class="sidebar-text truncate">Kalkulator & Slip Gaji</span>
         </button>
       </nav>
     </div>
 
-    <div class="p-6 border-t border-emerald-800 bg-emerald-950/30 flex items-center justify-between">
-      <div>
-        <p class="text-[10px] text-emerald-300 uppercase font-semibold">Masuk Sebagai</p>
-        <p id="admin-nama" class="text-xs font-bold text-white">Administrator</p>
+    <!-- USER SESSION & LOGOUT -->
+    <div class="p-4 md:p-6 border-t border-emerald-800 bg-emerald-950/30 flex items-center justify-between">
+      <div id="sidebar-user-info" class="overflow-hidden transition-all">
+        <p class="text-[9px] text-emerald-300 uppercase font-semibold">Masuk Sebagai</p>
+        <p id="admin-nama" class="text-xs font-bold text-white truncate">Administrator</p>
       </div>
-      <button onclick="logoutAdmin()" class="bg-rose-600 hover:bg-rose-700 text-white p-2 rounded-xl text-xs font-bold transition" title="Logout">
+      <button onclick="logoutAdmin()" class="bg-rose-600 hover:bg-rose-700 text-white p-2 rounded-xl text-xs font-bold transition shrink-0" title="Logout">
         🚪
       </button>
     </div>
@@ -82,7 +91,7 @@
     <section id="tab-member" class="tab-content space-y-4 hidden">
       <div class="flex justify-between items-center">
         <h2 class="text-xl font-black text-slate-800">Database Member Padel Boss</h2>
-        <button onclick="bukaModalMember()" class="bg-[#1b4d3e] text-white px-4 py-2.5 rounded-xl text-xs font-bold">➕ Tambah Member</button>
+        <button onclick="bukaModalMember()" class="bg-[#1b4d3e] text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm">➕ Tambah Member</button>
       </div>
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
         <table class="w-full text-left text-xs border-collapse">
@@ -259,6 +268,29 @@
   <!-- SCRIPT -->
   <script>
     let listMasterGaji = [];
+    let isSidebarExpanded = false;
+
+    function toggleSidebar() {
+      isSidebarExpanded = !isSidebarExpanded;
+      const sidebar = document.getElementById('sidebar');
+      const brand = document.getElementById('sidebar-brand');
+      const userInfo = document.getElementById('sidebar-user-info');
+      const texts = document.querySelectorAll('.sidebar-text');
+
+      if (isSidebarExpanded) {
+        sidebar.classList.remove('w-20');
+        sidebar.classList.add('w-64');
+        brand.style.display = 'block';
+        userInfo.style.display = 'block';
+        texts.forEach(t => t.style.display = 'inline');
+      } else {
+        sidebar.classList.remove('w-64');
+        sidebar.classList.add('w-20');
+        brand.style.display = 'none';
+        userInfo.style.display = 'none';
+        texts.forEach(t => t.style.display = 'none');
+      }
+    }
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -508,6 +540,14 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      // Set default mode sidebar terlipat (hanya shortcut ikon)
+      const brand = document.getElementById('sidebar-brand');
+      const userInfo = document.getElementById('sidebar-user-info');
+      const texts = document.querySelectorAll('.sidebar-text');
+      brand.style.display = 'none';
+      userInfo.style.display = 'none';
+      texts.forEach(t => t.style.display = 'none');
+
       muatDataBooking();
       muatDataMember();
       muatAbsensi();
