@@ -252,7 +252,7 @@ app.get('/api/member/login/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ================= API KARYAWAN & BOOKING =================
+// ================= API KARYAWAN & ABSENSI =================
 app.get('/api/karyawan', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM karyawan ORDER BY id_karyawan ASC');
@@ -367,6 +367,7 @@ app.post('/api/clock-out', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ================= API BOOKING & SLOT TERPAKAI =================
 app.get('/api/booking/next-id', async (req, res) => {
   try {
     const todayStr = getTanggalLokal().replace(/-/g, '');
@@ -379,6 +380,22 @@ app.get('/api/booking/next-id', async (req, res) => {
     }
     res.json({ id_booking: `BKG-${todayStr}-${String(nextNum).padStart(3, '0')}` });
   } catch (err) { res.json({ id_booking: `BKG-GENERAL-001` }); }
+});
+
+// Endpoint Cek Jadwal Booking Terpakai (Auto Blocking)
+app.get('/api/booking/terpakai', async (req, res) => {
+  try {
+    const { tanggal } = req.query;
+    if (!tanggal) return res.json([]);
+
+    const result = await pool.query(
+      'SELECT lokasi, detail_jam FROM booking_lapangan WHERE tanggal = $1 AND status != \'Ditolak\'',
+      [tanggal]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/booking', async (req, res) => {
