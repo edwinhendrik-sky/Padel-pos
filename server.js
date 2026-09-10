@@ -56,7 +56,7 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 // Helper untuk mendapatkan tanggal lokal Indonesia (WIB / Asia/Jakarta)
 function getTanggalLokal() {
   const options = { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' };
-  const formatter = new Intl.DateTimeFormat('en-CA', options); // Format yyyy-mm-dd
+  const formatter = new Intl.DateTimeFormat('en-CA', options);
   return formatter.format(new Date());
 }
 
@@ -120,7 +120,6 @@ initDB();
 
 // ================= API ENDPOINTS =================
 
-// Ambil Karyawan (Aman & Anti-Crash)
 app.get('/api/karyawan', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM karyawan ORDER BY id_karyawan ASC');
@@ -130,7 +129,6 @@ app.get('/api/karyawan', async (req, res) => {
   }
 });
 
-// Auto ID Karyawan Next
 app.get('/api/karyawan/next-id', async (req, res) => {
   try {
     const result = await pool.query(`SELECT id_karyawan FROM karyawan WHERE id_karyawan LIKE 'PDL-%' ORDER BY id_karyawan DESC LIMIT 1`);
@@ -145,7 +143,6 @@ app.get('/api/karyawan/next-id', async (req, res) => {
   }
 });
 
-// Ambil Master Gaji & Profil Lengkap
 app.get('/api/gaji-lengkap', async (req, res) => {
   try {
     const sql = `
@@ -173,7 +170,6 @@ app.get('/api/gaji-lengkap', async (req, res) => {
   }
 });
 
-// Simpan/Update Karyawan Utama
 app.post('/api/karyawan', async (req, res) => {
   const { id_karyawan, nama, no_hp, tgl_join, role } = req.body;
   try {
@@ -185,7 +181,6 @@ app.post('/api/karyawan', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Hapus Karyawan
 app.delete('/api/karyawan/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM karyawan WHERE id_karyawan = $1', [req.params.id]);
@@ -193,7 +188,6 @@ app.delete('/api/karyawan/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Simpan Rekening & Gaji
 app.post('/api/gaji-rekening', async (req, res) => {
   const { id_karyawan, nama_bank, no_rekening, nama_pemilik, gaji_pokok, tunjangan_shift, tunjangan_weekend, tunjangan_makan_transport, bonus_kehadiran, lembur_jam, tambahan_lain, potongan_lain } = req.body;
   try {
@@ -216,7 +210,7 @@ app.post('/api/gaji-rekening', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Absen Clock In
+// Absen Clock In (Real-time & Tanggal Hari Ini)
 app.post('/api/clock-in', async (req, res) => {
   const { id_karyawan, kode_lokasi, shift, user_lat, user_lng, foto } = req.body;
   const targetLokasi = LOKASI_PADEL[kode_lokasi || 'del_luna'];
@@ -228,7 +222,6 @@ app.post('/api/clock-in', async (req, res) => {
     }
   }
 
-  // Menggunakan tanggal lokal Indonesia (WIB)
   const today = getTanggalLokal();
   const timeNow = new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' });
 
@@ -237,23 +230,21 @@ app.post('/api/clock-in', async (req, res) => {
     if (check.rows.length > 0) return res.status(400).json({ error: 'Anda sudah Clock-In hari ini!' });
 
     await pool.query(`
-      INSERT INTO absensi (id_karyawan, kode_lokasi, lokasi, shift, foto_in, tanggal, waktu) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO absensi (id_karyawan, kode_lokasi, lokasi, shift, clock_in, foto_in, tanggal, waktu) 
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, $6, $7)
     `, [id_karyawan, kode_lokasi, targetLokasi ? targetLokasi.nama : 'Padel Club', shift || 'Shift 1', foto || '', today, timeNow]);
 
     res.json({ message: 'Clock-In Berhasil!' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Absen Clock Out
+// Absen Clock Out (Real-time Update Sesi Aktif Terakhir)
 app.post('/api/clock-out', async (req, res) => {
   const { id_karyawan, foto } = req.body;
-  
-  // Menggunakan tanggal lokal Indonesia (WIB)
   const today = getTanggalLokal();
 
   try {
-    const check = await pool.query('SELECT * FROM absensi WHERE id_karyawan = $1 AND tanggal = $2 AND clock_out IS NULL', [id_karyawan, today]);
+    const check = await pool.query('SELECT * FROM absensi WHERE id_karyawan = $1 AND tanggal = $2 AND clock_out IS NULL ORDER BY id DESC LIMIT 1', [id_karyawan, today]);
     if (check.rows.length === 0) return res.status(400).json({ error: 'Tidak ada sesi Clock-In aktif hari ini!' });
 
     await pool.query('UPDATE absensi SET clock_out = CURRENT_TIMESTAMP, foto_out = $1 WHERE id = $2', [foto || '', check.rows[0].id]);
@@ -261,7 +252,6 @@ app.post('/api/clock-out', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Riwayat Absensi
 app.get('/api/riwayat', async (req, res) => {
   try {
     const result = await pool.query(`
