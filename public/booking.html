@@ -6,7 +6,6 @@
   <title>Booking Lapangan & Poin Member - Padel Boss Mengger</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Proteksi Halaman Booking: Cek Sesi Member
     const savedMember = localStorage.getItem('member_padel');
     if (!savedMember) {
       window.location.replace('/login-member.html');
@@ -14,19 +13,19 @@
       try {
         const m = JSON.parse(savedMember);
         window.addEventListener('DOMContentLoaded', () => {
-          const inputHp = document.getElementById('b-hp');
-          if (inputHp) {
-            inputHp.value = m.no_hp || '';
-            inputHp.readOnly = true;
+          if (document.getElementById('b-hp')) {
+            document.getElementById('b-hp').value = m.no_hp || '';
           }
-          if (m.nama && m.nama !== 'Member Padel') {
-            const inputNama = document.getElementById('b-nama');
-            if (inputNama) inputNama.value = m.nama;
+          if (document.getElementById('b-nama')) {
+            document.getElementById('b-nama').value = m.nama || '';
+            document.getElementById('b-nama').readOnly = true;
           }
-          const infoPoin = document.getElementById('info-total-poin');
-          if (infoPoin) infoPoin.innerText = `${m.total_poin || 0} Poin`;
-          const statusHp = document.getElementById('status-member-hp');
-          if (statusHp) statusHp.innerText = `Login sebagai: ${m.nama}`;
+          if (document.getElementById('info-total-poin')) {
+            document.getElementById('info-total-poin').innerText = `${m.total_poin || 0} Poin`;
+          }
+          if (document.getElementById('status-member-hp')) {
+            document.getElementById('status-member-hp').innerText = `ID: ${m.id_member} | ${m. nama}`;
+          }
         });
       } catch (e) {
         localStorage.removeItem('member_padel');
@@ -54,7 +53,7 @@
     <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl flex justify-between items-center">
       <div>
         <p class="text-[11px] font-bold text-amber-900">Total Poin Member Anda:</p>
-        <p class="text-[10px] text-amber-700" id="status-member-hp">Memuat status member...</p>
+        <p class="text-[10px] text-amber-700" id="status-member-hp">Memuat status...</p>
       </div>
       <div class="text-right">
         <span class="text-base font-black text-amber-800" id="info-total-poin">0 Poin</span>
@@ -64,8 +63,8 @@
     <form onsubmit="kirimBooking(event)" class="space-y-3 text-xs">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
         <div>
-          <label class="block font-bold text-slate-700 uppercase mb-1">Nama Pemesan</label>
-          <input type="text" id="b-nama" required placeholder="Nama lengkap" class="w-full border border-slate-300 p-2.5 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none">
+          <label class="block font-bold text-slate-700 uppercase mb-1">Nama Member</label>
+          <input type="text" id="b-nama" required class="w-full border border-slate-200 p-2.5 rounded-xl bg-slate-100 font-bold text-slate-700 outline-none" readonly>
         </div>
         <div>
           <label class="block font-bold text-slate-700 uppercase mb-1">No. WhatsApp / HP</label>
@@ -203,12 +202,15 @@
         return alert("Mohon upload bukti transfer pembayaran!");
       }
 
+      const m = JSON.parse(localStorage.getItem('member_padel') || '{}');
+
       const reader = new FileReader();
       reader.onload = async function(event) {
         const payload = {
           id_booking: generatedIdBooking,
-          nama: document.getElementById('b-nama').value,
-          no_hp: document.getElementById('b-hp').value,
+          id_member: m.id_member || '',
+          nama: m.nama || document.getElementById('b-nama').value,
+          no_hp: m.no_hp || document.getElementById('b-hp').value,
           lokasi: `Padel Boss Mengger (${selectedCourts.join(', ')})`,
           tanggal: document.getElementById('b-tanggal').value,
           detail_jam: selectedJams.join(', '),
@@ -227,9 +229,7 @@
           const result = await res.json();
           if (!res.ok) throw new Error(result.error || "Gagal mengirim booking");
 
-          // Update lokal poin member
           try {
-            const m = JSON.parse(localStorage.getItem('member_padel') || '{}');
             m.total_poin = (m.total_poin || 0) + calculatedPoin;
             localStorage.setItem('member_padel', JSON.stringify(m));
           } catch(e){}

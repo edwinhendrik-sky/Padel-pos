@@ -65,32 +65,8 @@
 
 <script>
   window.addEventListener('DOMContentLoaded', () => {
-    const userSession = localStorage.getItem('user_padel');
-    if (userSession) {
-      try {
-        const u = JSON.parse(userSession);
-        if (u && (u.role === 'admin' || u.id_karyawan === 'ADMIN')) {
-          window.location.replace('/admin.html');
-          return;
-        }
-      } catch (e) {}
-    }
-
-    const savedKaryawan = localStorage.getItem('karyawan_aktif');
-    if (savedKaryawan && savedKaryawan !== 'null' && savedKaryawan !== 'undefined') {
-      try {
-        const k = JSON.parse(savedKaryawan);
-        if (k && k.id_karyawan) {
-          if (k.id_karyawan.toUpperCase() === 'ADMIN') {
-            window.location.replace('/admin.html');
-          } else {
-            window.location.replace('/index.html');
-          }
-        }
-      } catch (e) {
-        localStorage.removeItem('karyawan_aktif');
-      }
-    }
+    // Sesi dibiarkan kosong agar form login karyawan selalu tampil normal 
+    // dan tidak langsung melakukan redirect otomatis ke admin.html.
   });
 
   async function prosesLogin(e) {

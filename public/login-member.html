@@ -17,8 +17,8 @@
 
     <form onsubmit="prosesLoginMember(event)" class="space-y-4 text-xs">
       <div>
-        <label class="block font-bold text-slate-700 uppercase mb-1">Nomor WhatsApp / HP Member</label>
-        <input type="text" id="member-hp" required placeholder="Contoh: 08123456789" class="w-full border border-slate-300 p-3 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none text-center text-sm font-bold">
+        <label class="block font-bold text-slate-700 uppercase mb-1">ID Member</label>
+        <input type="text" id="member-id" required placeholder="Contoh: PB0010" class="w-full border border-slate-300 p-3 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none text-center text-sm font-bold uppercase">
       </div>
 
       <button type="submit" class="w-full bg-[#1b4d3e] hover:bg-[#14382d] text-white py-3 rounded-xl font-bold text-sm shadow-md transition">
@@ -26,8 +26,9 @@
       </button>
     </form>
 
-    <div class="text-center pt-3 border-t border-slate-200">
-      <a href="/login.html" class="text-xs text-slate-500 hover:text-[#1b4d3e] font-semibold transition">
+    <div class="text-center pt-3 border-t border-slate-200 space-y-2">
+      <p class="text-[11px] text-slate-500">Gunakan ID Member terdaftar (PB0010 - PB0045)</p>
+      <a href="/login.html" class="block text-xs text-slate-500 hover:text-[#1b4d3e] font-semibold transition">
         ← Kembali ke Login Karyawan / Admin
       </a>
     </div>
@@ -36,23 +37,26 @@
   <script>
     async function prosesLoginMember(e) {
       e.preventDefault();
-      const hp = document.getElementById('member-hp').value.trim();
-      if (!hp) return alert("Masukkan nomor HP member!");
+      const idMember = document.getElementById('member-id').value.trim().toUpperCase();
+      if (!idMember) return alert("Masukkan ID Member Anda!");
 
       try {
-        const res = await fetch(`/api/member-poin/${encodeURIComponent(hp)}`);
+        const res = await fetch(`/api/member/login/${encodeURIComponent(idMember)}`);
         const data = await res.json();
+        
+        if (!res.ok) throw new Error(data.error || "ID Member tidak ditemukan.");
 
-        // Simpan sesi member ke localStorage khusus member
         localStorage.setItem('member_padel', JSON.stringify({
-          no_hp: hp,
-          nama: data.nama || 'Member Padel',
+          id_member: data.id_member,
+          no_hp: data.no_hp,
+          nama: data.nama,
+          status_membership: data.status_membership,
           total_poin: data.total_poin || 0
         }));
 
         window.location.replace('/booking.html');
       } catch (err) {
-        alert("Gagal memproses login member: " + err.message);
+        alert("Gagal Login: " + err.message);
       }
     }
   </script>

@@ -3,659 +3,438 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Admin Absensi & Payroll - Padel</title>
+  <title>Admin Dashboard - Padel Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- Chart.js untuk Diagram Analitik -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800 flex flex-col md:flex-row">
 
-<!-- Header -->
-<header class="bg-[#1b4d3e] text-white p-4 shadow-md flex justify-between items-center border-b-4 border-[#d99e12]">
-  <div>
-    <h1 class="text-xl font-bold">Dashboard Admin Padel</h1>
-    <p class="text-xs text-amber-300">Padel Del Luna & Padel Boss Mengger</p>
-  </div>
-  <button onclick="handleLogoutAdmin()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded text-xs font-bold transition">
-    Logout
-  </button>
-</header>
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="w-full md:w-64 bg-[#1b4d3e] text-white flex flex-col justify-between shadow-xl md:min-h-screen sticky top-0 z-50">
+    <div class="p-6 space-y-6">
+      <!-- BRANDING -->
+      <div class="border-b border-emerald-800 pb-4">
+        <span class="text-[10px] font-bold tracking-widest text-[#d99e12] uppercase block">ADMINISTRATOR PORTAL</span>
+        <h1 class="text-base font-black tracking-tight mt-0.5">Padel Boss & Del Luna</h1>
+      </div>
 
-<div class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-
-  <!-- Navigasi Tab Utama -->
-  <div class="flex space-x-2 border-b border-slate-300 pb-2 overflow-x-auto">
-    <button onclick="switchTab('analytics')" id="tab-analytics" class="px-4 py-2 font-bold text-emerald-800 border-b-2 border-emerald-800 focus:outline-none whitespace-nowrap">
-      📊 Analitik & Diagram Presensi
-    </button>
-    <button onclick="switchTab('riwayat')" id="tab-riwayat" class="px-4 py-2 font-bold text-slate-500 hover:text-emerald-800 focus:outline-none whitespace-nowrap">
-      📅 Laporan Parent-Child (Tanggal)
-    </button>
-    <button onclick="switchTab('master')" id="tab-master" class="px-4 py-2 font-bold text-slate-500 hover:text-emerald-800 focus:outline-none whitespace-nowrap">
-      👤 Data Staf & Gaji
-    </button>
-    <button onclick="switchTab('payroll')" id="tab-payroll" class="px-4 py-2 font-bold text-slate-500 hover:text-emerald-800 focus:outline-none whitespace-nowrap">
-      💵 Kalkulator Penggajian
-    </button>
-  </div>
-
-  <!-- SECTION 0: ANALITIK & DIAGRAM PRESENSI (FITUR BARU) -->
-  <section id="section-analytics" class="space-y-6">
-    <!-- Ringkasan Kartu KPI -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-700">
-        <p class="text-xs text-slate-500 font-bold uppercase">Total Log Presensi</p>
-        <p class="text-2xl font-black text-slate-800 mt-1" id="kpi-total-absen">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-600">
-        <p class="text-xs text-slate-500 font-bold uppercase">Absensi Valid (In & Out)</p>
-        <p class="text-2xl font-black text-emerald-700 mt-1" id="kpi-valid">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500">
-        <p class="text-xs text-slate-500 font-bold uppercase">Absen Masih Aktif (Belum Out)</p>
-        <p class="text-2xl font-black text-amber-600 mt-1" id="kpi-aktif">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-600">
-        <p class="text-xs text-slate-500 font-bold uppercase">Lokasi Teraktif</p>
-        <p class="text-base font-bold text-indigo-900 mt-1 truncate" id="kpi-lokasi-top">-</p>
-      </div>
-    </div>
-
-    <!-- Grafik Diagram -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Diagram Tren Harian -->
-      <div class="bg-white p-5 rounded-xl shadow-sm space-y-2">
-        <h3 class="text-sm font-bold text-slate-800">📈 Tren Kehadiran per Tanggal</h3>
-        <div class="h-64 relative">
-          <canvas id="chartTrend"></canvas>
-        </div>
-      </div>
-      <!-- Diagram Distribusi Lokasi & Shift -->
-      <div class="bg-white p-5 rounded-xl shadow-sm space-y-2">
-        <h3 class="text-sm font-bold text-slate-800">🍩 Distribusi Absensi per Lokasi</h3>
-        <div class="h-64 relative flex justify-center">
-          <canvas id="chartLokasi"></canvas>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SECTION 1: LAPORAN PARENT-CHILD BERSARKAN TANGGAL (FITUR BARU) -->
-  <section id="section-riwayat" class="space-y-4 hidden">
-    <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div>
-        <h2 class="text-lg font-bold text-slate-800">Laporan Riwayat Presensi (Parent-Child)</h2>
-        <p class="text-xs text-slate-500">Klik pada baris tanggal (Parent) untuk melihat detail absensi karyawan (Child).</p>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <select id="filter-lokasi" onchange="renderParentChildRiwayat()" class="border p-2 rounded text-xs bg-slate-50">
-          <option value="semua">Semua Lokasi</option>
-          <option value="Padel Del Luna">Padel Del Luna</option>
-          <option value="Padel Boss Mengger">Padel Boss Mengger</option>
-        </select>
-        <button onclick="exportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded text-xs font-bold">
-          📊 Export Excel (.xlsx)
+      <!-- MENU LIST -->
+      <nav class="space-y-1 text-xs font-bold">
+        <button onclick="switchTab('tab-booking')" id="btn-tab-booking" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-emerald-900/80 text-white transition">
+          <span class="text-base">📅</span>
+          <span>Data Booking</span>
         </button>
-      </div>
+        <button onclick="switchTab('tab-member')" id="btn-tab-member" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition">
+          <span class="text-base">👥</span>
+          <span>Database Member</span>
+        </button>
+        <button onclick="switchTab('tab-absensi')" id="btn-tab-absensi" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition">
+          <span class="text-base">📍</span>
+          <span>Rekap Absensi</span>
+        </button>
+        <button onclick="switchTab('tab-karyawan')" id="btn-tab-karyawan" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition">
+          <span class="text-base">💰</span>
+          <span>Master Karyawan & Gaji</span>
+        </button>
+      </nav>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
-      <div id="container-parent-child" class="divide-y divide-slate-200 text-sm">
-        <div class="p-4 text-center text-slate-500">Memuat data riwayat...</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SECTION 2: MASTER DATA STAF & GAJI -->
-  <section id="section-master" class="space-y-4 hidden">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
+    <!-- USER SESSION & LOGOUT -->
+    <div class="p-6 border-t border-emerald-800 bg-emerald-950/30 flex items-center justify-between">
       <div>
-        <h2 class="text-lg font-bold text-slate-800">Master Data Staf</h2>
-        <p class="text-xs text-slate-500">Tambah staf atau perbarui data rekening & nominal komponen gaji dasar.</p>
+        <p class="text-[10px] text-emerald-300 uppercase font-semibold">Masuk Sebagai</p>
+        <p id="admin-nama" class="text-xs font-bold text-white">Administrator</p>
       </div>
-      <button onclick="bukaModalKaryawan()" class="bg-[#1b4d3e] hover:bg-[#14382d] text-white px-4 py-2 rounded-lg text-sm font-bold transition">
-        + Tambah Staf Baru
+      <button onclick="logoutAdmin()" class="bg-rose-600 hover:bg-rose-700 text-white p-2 rounded-xl text-xs font-bold transition" title="Logout">
+        🚪
       </button>
     </div>
+  </aside>
 
-    <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
-      <table class="w-full text-left text-sm border-collapse">
-        <thead class="bg-[#1b4d3e] text-white uppercase text-xs">
-          <tr>
-            <th class="p-3">ID & Nama Staf</th>
-            <th class="p-3">No. WhatsApp</th>
-            <th class="p-3">Data Bank</th>
-            <th class="p-3">Gaji Pokok</th>
-            <th class="p-3 text-center">Aksi Kelola</th>
-          </tr>
-        </thead>
-        <tbody id="tb-karyawan" class="divide-y divide-slate-200">
-          <tr><td colspan="5" class="p-4 text-center text-slate-500">Memuat data staf...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+  <!-- MAIN CONTENT AREA -->
+  <main class="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto max-w-full">
 
-  <!-- SECTION 3: KALKULATOR GAJI & SLIP GAJI -->
-  <section id="section-payroll" class="space-y-4 hidden">
-    <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
-      <h2 class="text-lg font-bold text-slate-800">Kalkulator Take Home Pay (THP) Gaji Periode</h2>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <!-- 1. KONTEN TAB BOOKING -->
+    <section id="tab-booking" class="tab-content space-y-4">
+      <div class="flex justify-between items-center">
         <div>
-          <label class="block text-xs font-bold text-slate-600">Mulai Tanggal:</label>
-          <input type="date" id="p-start" class="w-full border p-2 rounded text-xs mt-1">
+          <h2 class="text-xl font-black text-slate-800">Daftar Booking Lapangan</h2>
+          <p class="text-xs text-slate-500">Kelola jadwal booking dan verifikasi bukti transfer pembayaran customer.</p>
+        </div>
+      </div>
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700">
+                <th class="p-3">ID Booking</th>
+                <th class="p-3">Pemesan</th>
+                <th class="p-3">No. HP</th>
+                <th class="p-3">Lokasi / Court</th>
+                <th class="p-3">Jadwal Main</th>
+                <th class="p-3">Total Bayar</th>
+                <th class="p-3">Poin</th>
+                <th class="p-3 text-center">Bukti Transfer</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-booking-body">
+              <tr><td colspan="8" class="p-6 text-center text-slate-400">Memuat data booking...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. KONTEN TAB MEMBER (CRUD) -->
+    <section id="tab-member" class="tab-content space-y-4 hidden">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-black text-slate-800">Database Member Padel Boss</h2>
+          <p class="text-xs text-slate-500">Kelola data keanggotaan, masa berlaku, dan total poin reward member.</p>
+        </div>
+        <button onclick="bukaModalMember()" class="bg-[#1b4d3e] hover:bg-[#14382d] text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition">➕ Tambah Member Baru</button>
+      </div>
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700">
+                <th class="p-3">ID Member</th>
+                <th class="p-3">Nama Member</th>
+                <th class="p-3">No. WhatsApp</th>
+                <th class="p-3">Status</th>
+                <th class="p-3">Masa Berlaku (Start - Stop)</th>
+                <th class="p-3">Poin Reward</th>
+                <th class="p-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-member-body">
+              <tr><td colspan="7" class="p-6 text-center text-slate-400">Memuat data member...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. KONTEN TAB ABSENSI -->
+    <section id="tab-absensi" class="tab-content space-y-4 hidden">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-black text-slate-800">Rekap Absensi Karyawan</h2>
+          <p class="text-xs text-slate-500">Pantau kehadiran dan pencatatan waktu real-time karyawan.</p>
+        </div>
+      </div>
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700">
+                <th class="p-3">Tanggal</th>
+                <th class="p-3">Karyawan</th>
+                <th class="p-3">Lokasi</th>
+                <th class="p-3">Shift</th>
+                <th class="p-3">Clock In</th>
+                <th class="p-3">Clock Out</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-absensi-body">
+              <tr><td colspan="6" class="p-6 text-center text-slate-400">Memuat riwayat absensi...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. KONTEN TAB KARYAWAN & GAJI -->
+    <section id="tab-karyawan" class="tab-content space-y-4 hidden">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-black text-slate-800">Master Karyawan & Komponen Gaji</h2>
+          <p class="text-xs text-slate-500">Pengelolaan profil staf dan rincian komponen gaji.</p>
+        </div>
+      </div>
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700">
+                <th class="p-3">ID</th>
+                <th class="p-3">Nama</th>
+                <th class="p-3">No. HP</th>
+                <th class="p-3">Gaji Pokok</th>
+                <th class="p-3">Total Tunjangan</th>
+                <th class="p-3">Total Gaji Kotor</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-gaji-body">
+              <tr><td colspan="6" class="p-6 text-center text-slate-400">Memuat data gaji...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL TAMBAH/EDIT MEMBER -->
+  <div id="modal-member" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl">
+      <h3 id="modal-title" class="font-black text-base text-[#1b4d3e]">Tambah Member Baru</h3>
+      <form onsubmit="simpanMember(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">ID Member</label>
+          <input type="text" id="m-id" required class="w-full border border-slate-300 p-2.5 rounded-xl font-bold uppercase bg-slate-100" readonly>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-600">Sampai Tanggal:</label>
-          <input type="date" id="p-end" class="w-full border p-2 rounded text-xs mt-1">
+          <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Member</label>
+          <input type="text" id="m-nama" required placeholder="Nama sesuai member" class="w-full border border-slate-300 p-2.5 rounded-xl font-medium outline-none focus:ring-2 focus:ring-[#1b4d3e]">
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-600">Target Hari Kerja (1 Bln):</label>
-          <input type="number" id="p-target" value="26" class="w-full border p-2 rounded text-xs mt-1">
+          <label class="block font-bold text-slate-700 mb-1">No. WhatsApp</label>
+          <input type="text" id="m-hp" required placeholder="628..." class="w-full border border-slate-300 p-2.5 rounded-xl font-medium outline-none focus:ring-2 focus:ring-[#1b4d3e]">
         </div>
-        <div class="flex items-end">
-          <button onclick="hitungGajiPeriode()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-lg font-bold text-xs transition">
-            ⚡ Hitung Gaji Periode
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
-      <table class="w-full text-left text-sm">
-        <thead class="bg-slate-800 text-white uppercase text-xs">
-          <tr>
-            <th class="p-3">ID & Nama</th>
-            <th class="p-3">Total Kehadiran Valid</th>
-            <th class="p-3">Hadir Weekend</th>
-            <th class="p-3">Tnj. Transport</th>
-            <th class="p-3">Estimasi THP Gaji</th>
-            <th class="p-3 text-center">Cetak Slip</th>
-          </tr>
-        </thead>
-        <tbody id="tb-payroll" class="divide-y divide-slate-200">
-          <tr><td colspan="6" class="p-4 text-center text-slate-500">Klik "Hitung Gaji Periode" di atas...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-</div>
-
-<!-- MODAL EDIT STAF & GAJI SEKALIGUS -->
-<div id="modal-karyawan" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-  <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
-    <h3 class="text-lg font-bold border-b pb-2" id="modal-title">Kelola Data Staf</h3>
-    
-    <form id="form-karyawan" onsubmit="simpanDataStaf(event)" class="space-y-3 text-xs">
-      <div>
-        <label class="block font-bold text-slate-600">ID Staf</label>
-        <input type="text" id="m-id" readonly class="w-full border p-2 rounded mt-1 bg-slate-100 font-bold text-emerald-800">
-      </div>
-      <div>
-        <label class="block font-bold text-slate-600">Nama Lengkap</label>
-        <input type="text" id="m-nama" required class="w-full border p-2 rounded mt-1">
-      </div>
-      <div>
-        <label class="block font-bold text-slate-600">No. WhatsApp</label>
-        <input type="text" id="m-hp" required class="w-full border p-2 rounded mt-1">
-      </div>
-      <div>
-        <label class="block font-bold text-slate-600">Tanggal Join</label>
-        <input type="date" id="m-join" required class="w-full border p-2 rounded mt-1">
-      </div>
-
-      <div class="border-t pt-2 space-y-2">
-        <p class="font-bold text-emerald-800">🏦 Data Rekening Bank</p>
         <div class="grid grid-cols-2 gap-2">
-          <input type="text" id="m-bank" placeholder="Nama Bank (BCA)" class="border p-2 rounded">
-          <input type="text" id="m-norek" placeholder="No. Rekening" class="border p-2 rounded">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Status</label>
+            <select id="m-status" class="w-full border border-slate-300 p-2.5 rounded-xl font-medium">
+              <option value="AKTIF">AKTIF</option>
+              <option value="NONAKTIF">NONAKTIF</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Total Poin</label>
+            <input type="number" id="m-poin" value="0" class="w-full border border-slate-300 p-2.5 rounded-xl font-bold">
+          </div>
         </div>
-        <input type="text" id="m-pemilik" placeholder="Atas Nama Pemilik" class="w-full border p-2 rounded">
-      </div>
-
-      <div class="border-t pt-2 space-y-2">
-        <p class="font-bold text-emerald-800">💵 Komponen Gaji Nominal (Rp)</p>
         <div class="grid grid-cols-2 gap-2">
-          <div><label>Gaji Pokok</label><input type="number" id="m-gapok" class="w-full border p-2 rounded"></div>
-          <div><label>Bonus Kehadiran</label><input type="number" id="m-bonus" class="w-full border p-2 rounded"></div>
-          <div><label>Tnj. Weekend</label><input type="number" id="m-tweekend" class="w-full border p-2 rounded"></div>
-          <div><label>Makan & Transport</label><input type="number" id="m-tmakan" class="w-full border p-2 rounded"></div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Start Member</label>
+            <input type="date" id="m-start" class="w-full border border-slate-300 p-2.5 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Stop Member</label>
+            <input type="date" id="m-stop" class="w-full border border-slate-300 p-2.5 rounded-xl">
+          </div>
         </div>
-      </div>
-
-      <div class="flex justify-end space-x-2 pt-3 border-t">
-        <button type="button" onclick="tutupModal()" class="px-4 py-2 bg-slate-200 rounded font-bold">Batal</button>
-        <button type="submit" class="px-4 py-2 bg-[#1b4d3e] text-white rounded font-bold">Simpan Seluruh Data</button>
-      </div>
-    </form>
+        <div class="flex space-x-2 pt-2">
+          <button type="button" onclick="tutupModalMember()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2.5 rounded-xl font-bold transition">Batal</button>
+          <button type="submit" class="w-1/2 bg-[#1b4d3e] hover:bg-[#14382d] text-white py-2.5 rounded-xl font-bold transition">Simpan</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
-<script>
-  let dataStafGlobal = [];
-  let dataRiwayatGlobal = [];
-  let chartTrendInstance = null;
-  let chartLokasiInstance = null;
-
-  function switchTab(tab) {
-    ['analytics', 'riwayat', 'master', 'payroll'].forEach(t => {
-      document.getElementById(`section-${t}`).classList.add('hidden');
-      document.getElementById(`tab-${t}`).className = "px-4 py-2 font-bold text-slate-500 hover:text-emerald-800 focus:outline-none whitespace-nowrap";
-    });
-    document.getElementById(`section-${tab}`).classList.remove('hidden');
-    document.getElementById(`tab-${tab}`).className = "px-4 py-2 font-bold text-emerald-800 border-b-2 border-emerald-800 focus:outline-none whitespace-nowrap";
-
-    if (tab === 'analytics') muatDashboardAnalitik();
-    if (tab === 'riwayat') renderParentChildRiwayat();
-    if (tab === 'master') muatStaf();
-    if (tab === 'payroll') initPayrollDates();
-  }
-
-  // ================= ANALITIK & DIAGRAM =================
-  async function muatDashboardAnalitik() {
-    const res = await fetch('/api/riwayat');
-    dataRiwayatGlobal = await res.json();
-
-    // 1. Hitung Kartu KPI
-    const totalLog = dataRiwayatGlobal.length;
-    const validCount = dataRiwayatGlobal.filter(r => r.clock_in && r.clock_out).length;
-    const aktifCount = dataRiwayatGlobal.filter(r => r.clock_in && !r.clock_out).length;
-
-    document.getElementById('kpi-total-absen').innerText = totalLog;
-    document.getElementById('kpi-valid').innerText = validCount;
-    document.getElementById('kpi-aktif').innerText = aktifCount;
-
-    // Hitung Lokasi Teraktif
-    const countsLokasi = {};
-    dataRiwayatGlobal.forEach(r => {
-      const loc = r.lokasi || 'Tidak Terdeteksi';
-      countsLokasi[loc] = (countsLokasi[loc] || 0) + 1;
-    });
-    let topLokasi = '-';
-    let maxCount = 0;
-    for (const [key, val] of Object.entries(countsLokasi)) {
-      if (val > maxCount) { maxCount = val; topLokasi = key; }
-    }
-    document.getElementById('kpi-lokasi-top').innerText = topLokasi;
-
-    // 2. Render Diagram Tren Harian (Line Chart)
-    const countsTanggal = {};
-    dataRiwayatGlobal.forEach(r => {
-      if (r.tanggal) {
-        const dateStr = new Date(r.tanggal).toISOString().split('T')[0];
-        countsTanggal[dateStr] = (countsTanggal[dateStr] || 0) + 1;
-      }
-    });
-
-    const sortedDates = Object.keys(countsTanggal).sort();
-    const dataCounts = sortedDates.map(d => countsTanggal[d]);
-
-    if (chartTrendInstance) chartTrendInstance.destroy();
-    const ctxTrend = document.getElementById('chartTrend').getContext('2d');
-    chartTrendInstance = new Chart(ctxTrend, {
-      type: 'line',
-      data: {
-        labels: sortedDates.map(d => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })),
-        datasets: [{
-          label: 'Jumlah Kehadiran',
-          data: dataCounts,
-          borderColor: '#1b4d3e',
-          backgroundColor: 'rgba(27, 77, 62, 0.1)',
-          fill: true,
-          tension: 0.3,
-          borderWidth: 3,
-          pointRadius: 4
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false }
-    });
-
-    // 3. Render Diagram Doughnut Lokasi
-    if (chartLokasiInstance) chartLokasiInstance.destroy();
-    const ctxLokasi = document.getElementById('chartLokasi').getContext('2d');
-    chartLokasiInstance = new Chart(ctxLokasi, {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(countsLokasi),
-        datasets: [{
-          data: Object.values(countsLokasi),
-          backgroundColor: ['#1b4d3e', '#d99e12', '#2563eb', '#dc2626']
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false }
-    });
-  }
-
-  // ================= TAMPILAN PARENT-CHILD (TANGGAL) =================
-  async function renderParentChildRiwayat() {
-    if (dataRiwayatGlobal.length === 0) {
-      const res = await fetch('/api/riwayat');
-      dataRiwayatGlobal = await res.json();
-    }
-
-    const filter = document.getElementById('filter-lokasi').value;
-    let list = dataRiwayatGlobal;
-    if (filter !== 'semua') list = dataRiwayatGlobal.filter(d => d.lokasi === filter);
-
-    // Grouping berdasarkan Tanggal (Parent)
-    const grouped = {};
-    list.forEach(item => {
-      const tglKey = item.tanggal ? new Date(item.tanggal).toISOString().split('T')[0] : 'Lainnya';
-      if (!grouped[tglKey]) grouped[tglKey] = [];
-      grouped[tglKey].push(item);
-    });
-
-    const sortedDates = Object.keys(grouped).sort().reverse();
-    const container = document.getElementById('container-parent-child');
-
-    if (sortedDates.length === 0) {
-      container.innerHTML = `<div class="p-4 text-center text-slate-400">Tidak ada data absensi.</div>`;
-      return;
-    }
-
-    container.innerHTML = sortedDates.map((tgl, index) => {
-      const items = grouped[tgl];
-      const validInDate = items.filter(i => i.clock_in && i.clock_out).length;
-      const formattedDate = tgl !== 'Lainnya' ? new Date(tgl).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Tanggal Tidak Valid';
-
-      return `
-        <div class="bg-white">
-          <!-- BARIS PARENT (TANGGAL) -->
-          <div onclick="toggleChild('child-${index}')" class="p-3.5 bg-slate-50 hover:bg-emerald-50/50 cursor-pointer flex justify-between items-center transition select-none border-b border-slate-200">
-            <div class="flex items-center space-x-3">
-              <span id="icon-child-${index}" class="text-xs text-slate-500 font-bold transition-transform">►</span>
-              <div>
-                <span class="font-bold text-slate-800 text-sm">${formattedDate}</span>
-                <span class="text-xs text-slate-500 ml-2">(${items.length} Staf Abesn)</span>
-              </div>
-            </div>
-            <div class="flex items-center space-x-2">
-              <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded font-bold">${validInDate} Valid</span>
-              <span class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded font-semibold">${items.length - validInDate} Aktif/Incomplete</span>
-            </div>
-          </div>
-
-          <!-- BARIS CHILD (DETAIL ABSEN KARYAWAN) -->
-          <div id="child-${index}" class="hidden bg-slate-100/60 p-3 space-y-2 border-b border-slate-200">
-            <table class="w-full text-left text-xs bg-white rounded-lg overflow-hidden shadow-sm border border-slate-200">
-              <thead class="bg-slate-800 text-white font-bold">
-                <tr>
-                  <th class="p-2.5">Staf</th>
-                  <th class="p-2.5">Lokasi & Shift</th>
-                  <th class="p-2.5">Clock In</th>
-                  <th class="p-2.5">Clock Out</th>
-                  <th class="p-2.5">Status</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                ${items.map(child => `
-                  <tr class="hover:bg-slate-50">
-                    <td class="p-2.5 font-bold">${child.nama}<br><span class="text-[10px] text-slate-500 font-normal">${child.id_karyawan}</span></td>
-                    <td class="p-2.5"><b class="text-emerald-800">${child.lokasi}</b><br><span class="text-slate-500">${child.shift || '-'}</span></td>
-                    <td class="p-2.5 text-emerald-700 font-bold">${child.clock_in ? new Date(child.clock_in).toLocaleTimeString('id-ID') : '-'}</td>
-                    <td class="p-2.5 text-rose-700 font-bold">${child.clock_out ? new Date(child.clock_out).toLocaleTimeString('id-ID') : 'Masih Aktif'}</td>
-                    <td class="p-2.5">
-                      ${child.clock_in && child.clock_out 
-                        ? `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">Lengkap</span>` 
-                        : `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px]">Aktif</span>`}
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  function toggleChild(id) {
-    const el = document.getElementById(id);
-    const icon = document.getElementById('icon-' + id);
-    if (el.classList.contains('hidden')) {
-      el.classList.remove('hidden');
-      if (icon) icon.style.transform = 'rotate(90deg)';
-    } else {
-      el.classList.add('hidden');
-      if (icon) icon.style.transform = 'rotate(0deg)';
-    }
-  }
-
-  // ================= FUNGSI MASTER STAF & GAJI =================
-  async function muatStaf() {
-    try {
-      const res = await fetch('/api/gaji-lengkap');
-      dataStafGlobal = await res.json();
-      
-      const tbody = document.getElementById('tb-karyawan');
-      tbody.innerHTML = dataStafGlobal.map(k => `
-        <tr class="hover:bg-slate-50">
-          <td class="p-3 font-bold">${k.nama}<br><span class="text-xs text-amber-600 font-semibold">${k.id_karyawan}</span></td>
-          <td class="p-3">${k.no_hp || '-'}</td>
-          <td class="p-3 text-xs"><b>${k.nama_bank || '-'}</b><br>${k.no_rekening || '-'}</td>
-          <td class="p-3 font-bold text-emerald-700">Rp ${Number(k.gaji_pokok || 0).toLocaleString('id-ID')}</td>
-          <td class="p-3 text-center space-x-1">
-            <button onclick="editStaf('${k.id_karyawan}')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">✏️ Edit</button>
-            <button onclick="hapusStaf('${k.id_karyawan}')" class="bg-rose-600 text-white px-2 py-1 rounded text-xs font-bold">🗑️ Hapus</button>
-          </td>
-        </tr>
-      `).join('');
-    } catch(err) { console.error(err); }
-  }
-
-  async function bukaModalKaryawan() {
-    document.getElementById('form-karyawan').reset();
-    document.getElementById('modal-title').innerText = "Tambah Staf Baru";
-    const res = await fetch('/api/karyawan/next-id');
-    const data = await res.json();
-    document.getElementById('m-id').value = data.nextId || 'PDL-001';
-    document.getElementById('m-join').value = new Date().toISOString().split('T')[0];
-    document.getElementById('modal-karyawan').classList.remove('hidden');
-    document.getElementById('modal-karyawan').classList.add('flex');
-  }
-
-  function editStaf(id) {
-    const k = dataStafGlobal.find(item => item.id_karyawan === id);
-    if (!k) return;
-    document.getElementById('modal-title').innerText = "Edit Staf: " + k.id_karyawan;
-    document.getElementById('m-id').value = k.id_karyawan;
-    document.getElementById('m-nama').value = k.nama || '';
-    document.getElementById('m-hp').value = k.no_hp || '';
-    document.getElementById('m-join').value = k.tgl_join ? k.tgl_join.split('T')[0] : '';
-    document.getElementById('m-bank').value = k.nama_bank || '';
-    document.getElementById('m-norek').value = k.no_rekening || '';
-    document.getElementById('m-pemilik').value = k.nama_pemilik || '';
-    document.getElementById('m-gapok').value = k.gaji_pokok || 0;
-    document.getElementById('m-bonus').value = k.bonus_kehadiran || 0;
-    document.getElementById('m-tweekend').value = k.tunjangan_weekend || 0;
-    document.getElementById('m-tmakan').value = k.tunjangan_makan_transport || 0;
-    document.getElementById('modal-karyawan').classList.remove('hidden');
-    document.getElementById('modal-karyawan').classList.add('flex');
-  }
-
-  function tutupModal() {
-    document.getElementById('modal-karyawan').classList.add('hidden');
-    document.getElementById('modal-karyawan').classList.remove('flex');
-  }
-
-  async function simpanDataStaf(e) {
-    e.preventDefault();
-    const id_karyawan = document.getElementById('m-id').value;
-    const nama = document.getElementById('m-nama').value;
-    const no_hp = document.getElementById('m-hp').value;
-    const tgl_join = document.getElementById('m-join').value;
-
-    await fetch('/api/karyawan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_karyawan, nama, no_hp, tgl_join })
-    });
-
-    await fetch('/api/gaji-rekening', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id_karyawan,
-        nama_bank: document.getElementById('m-bank').value,
-        no_rekening: document.getElementById('m-norek').value,
-        nama_pemilik: document.getElementById('m-pemilik').value || nama,
-        gaji_pokok: document.getElementById('m-gapok').value || 0,
-        bonus_kehadiran: document.getElementById('m-bonus').value || 0,
-        tunjangan_weekend: document.getElementById('m-tweekend').value || 0,
-        tunjangan_makan_transport: document.getElementById('m-tmakan').value || 0
-      })
-    });
-
-    alert("Data staf berhasil diperbarui!");
-    tutupModal();
-    muatStaf();
-  }
-
-  async function hapusStaf(id) {
-    if (confirm(`Hapus staf ${id}?`)) {
-      await fetch(`/api/karyawan/${id}`, { method: 'DELETE' });
-      muatStaf();
-    }
-  }
-
-  // ================= KALKULATOR GAJI =================
-  function initPayrollDates() {
-    const now = new Date();
-    document.getElementById('p-start').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    document.getElementById('p-end').value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-    hitungGajiPeriode();
-  }
-
-  async function hitungGajiPeriode() {
-    const start = document.getElementById('p-start').value;
-    const end = document.getElementById('p-end').value;
-    const targetHari = parseInt(document.getElementById('p-target').value) || 26;
-
-    const resAbsen = await fetch('/api/riwayat');
-    const absensi = await resAbsen.json();
-    
-    if (dataStafGlobal.length === 0) {
-      const resGaji = await fetch('/api/gaji-lengkap');
-      dataStafGlobal = await resGaji.json();
-    }
-
-    const tbody = document.getElementById('tb-payroll');
-    tbody.innerHTML = dataStafGlobal.map(k => {
-      const userAbsen = absensi.filter(a => 
-        (a.id_karyawan === k.id_karyawan || a.nama === k.nama) && 
-        a.tanggal >= start && a.tanggal <= end
-      );
-
-      const absenValid = userAbsen.filter(a => a.clock_in && a.clock_out);
-      const totalHadirValid = absenValid.length;
-
-      let hadirWeekend = 0;
-      absenValid.forEach(a => {
-        if (a.tanggal) {
-          const day = new Date(a.tanggal).getDay();
-          if (day === 0 || day === 6) hadirWeekend++;
-        }
+  <!-- SCRIPT UTAMA ADMIN -->
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.sidebar-btn').forEach(el => {
+        el.classList.remove('bg-emerald-900/80', 'text-white');
+        el.classList.add('text-emerald-100/70', 'hover:bg-emerald-950/40', 'hover:text-white');
       });
+      document.getElementById(tabId).classList.remove('hidden');
+      const btn = document.getElementById('btn-' + tabId);
+      btn.classList.remove('text-emerald-100/70', 'hover:bg-emerald-950/40', 'hover:text-white');
+      btn.classList.add('bg-emerald-900/80', 'text-white');
+    }
 
-      const hariAlpa = Math.max(0, targetHari - totalHadirValid);
-      const potonganTransport = hariAlpa * 10000;
-      const tnjTransportNett = Math.max(0, 300000 - potonganTransport);
+    function logoutAdmin() {
+      localStorage.clear();
+      window.location.replace('/login.html');
+    }
 
-      const gapokProporsional = totalHadirValid >= targetHari 
-        ? Number(k.gaji_pokok || 0) 
-        : (Number(k.gaji_pokok || 0) / targetHari) * totalHadirValid;
-      
-      const nominalWeekend = hadirWeekend * (Number(k.tunjangan_weekend) || 25000);
-      const bonusHadir = totalHadirValid >= targetHari ? Number(k.bonus_kehadiran || 0) : 0;
+    async function muatDataBooking() {
+      try {
+        const res = await fetch('/api/booking');
+        const data = await res.json();
+        const tbody = document.getElementById('tabel-booking-body');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Belum ada data booking.</td></tr>`;
+          return;
+        }
+        data.forEach(b => {
+          tbody.innerHTML += `
+            <tr class="border-b border-slate-100 hover:bg-slate-50">
+              <td class="p-3 font-bold text-[#1b4d3e]">${b.id_booking}</td>
+              <td class="p-3 font-semibold">${b.nama}</td>
+              <td class="p-3">${b.no_hp}</td>
+              <td class="p-3">${b.lokasi}</td>
+              <td class="p-3">${b.tanggal} (${b.detail_jam})</td>
+              <td class="p-3 font-bold text-emerald-700">Rp ${Number(b.total_bayar).toLocaleString('id-ID')}</td>
+              <td class="p-3 font-bold text-amber-600">+${b.poin_didapat} Poin</td>
+              <td class="p-3 text-center">
+                ${b.bukti_transfer ? `<a href="${b.bukti_transfer}" target="_blank" class="bg-amber-100 text-amber-800 px-3 py-1 rounded-lg font-bold text-[11px]">Lihat Foto</a>` : '<span class="text-slate-400">Tidak ada</span>'}
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) { console.error("Error load booking:", err); }
+    }
 
-      const thp = gapokProporsional + nominalWeekend + bonusHadir + tnjTransportNett;
+    async function muatDataMember() {
+      try {
+        const res = await fetch('/api/member');
+        const data = await res.json();
+        const tbody = document.getElementById('tabel-member-body');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Belum ada data member.</td></tr>`;
+          return;
+        }
+        data.forEach(m => {
+          tbody.innerHTML += `
+            <tr class="border-b border-slate-100 hover:bg-slate-50">
+              <td class="p-3 font-bold text-[#1b4d3e]">${m.id_member}</td>
+              <td class="p-3 font-semibold">${m.nama}</td>
+              <td class="p-3">${m.no_hp}</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">${m.status_membership}</span></td>
+              <td class="p-3">${m.start_member || '-'} s/d ${m.stop_member || '-'}</td>
+              <td class="p-3 font-bold text-amber-600">${m.total_poin} Poin</td>
+              <td class="p-3 text-center space-x-1">
+                <button onclick="bukaEditMember('${m.id_member}', '${m.nama}', '${m.no_hp}', '${m.status_membership}', '${m.start_member}', '${m.stop_member}', ${m.total_poin})" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-2.5 py-1 rounded font-bold transition">Edit</button>
+                <button onclick="hapusMember('${m.id_member}')" class="bg-rose-100 hover:bg-rose-200 text-rose-800 px-2.5 py-1 rounded font-bold transition">Hapus</button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) { console.error("Error load member:", err); }
+    }
 
-      return `
-        <tr class="hover:bg-slate-50 text-xs">
-          <td class="p-3 font-bold">${k.nama}<br><span class="text-slate-500 font-normal">${k.id_karyawan}</span></td>
-          <td class="p-3">
-            <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">${totalHadirValid} / ${targetHari} Hari</span>
-            ${hariAlpa > 0 ? `<br><span class="text-rose-600 font-medium text-[10px]">Alpa/Incomplete: ${hariAlpa} Hari</span>` : ''}
-          </td>
-          <td class="p-3">${hadirWeekend} Hari</td>
-          <td class="p-3">
-            <span class="font-semibold">Rp ${tnjTransportNett.toLocaleString('id-ID')}</span>
-            ${potonganTransport > 0 ? `<br><span class="text-rose-500 text-[10px]">(Potongan: -Rp ${potonganTransport.toLocaleString('id-ID')})</span>` : ''}
-          </td>
-          <td class="p-3 font-bold text-emerald-700">Rp ${Math.round(thp).toLocaleString('id-ID')}</td>
-          <td class="p-3 text-center">
-            <button onclick="cetakSlip('${k.id_karyawan}', ${totalHadirValid}, ${targetHari}, ${hadirWeekend}, ${tnjTransportNett}, ${potonganTransport}, ${Math.round(thp)})" class="bg-slate-800 text-white px-2.5 py-1 rounded text-xs font-bold hover:bg-slate-900 transition">
-              🖨️ Cetak Slip
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
-  }
+    async function bukaModalMember() {
+      document.getElementById('modal-title').innerText = "Tambah Member Baru";
+      try {
+        const res = await fetch('/api/member/next-id');
+        const data = await res.json();
+        document.getElementById('m-id').value = data.nextId;
+      } catch(e) {
+        document.getElementById('m-id').value = "PB0046";
+      }
+      document.getElementById('m-nama').value = '';
+      document.getElementById('m-hp').value = '';
+      document.getElementById('m-status').value = 'AKTIF';
+      document.getElementById('m-poin').value = 0;
+      document.getElementById('m-start').value = '';
+      document.getElementById('m-stop').value = '';
+      document.getElementById('modal-member').classList.remove('hidden');
+      document.getElementById('modal-member').classList.add('flex');
+    }
 
-  function cetakSlip(id, totalHadir, targetHari, weekend, tnjTransport, potonganTransport, thp) {
-    const k = dataStafGlobal.find(item => item.id_karyawan === id);
-    if (!k) return;
-    const w = window.open('', '_blank', 'width=700,height=800');
-    w.document.write(`
-      <style>
-        body { font-family: sans-serif; padding: 30px; color: #333; }
-        .header { border-bottom: 2px solid #1b4d3e; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        td, th { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
-        .text-right { text-align: right; }
-      </style>
-      <div class="header">
-        <h2>PADEL CLUB MANAGEMENT</h2>
-        <p>SLIP GAJI STAF - PERIODE ${new Date().toLocaleDateString('id-ID', {month:'long', year:'numeric'})}</p>
-      </div>
-      <p><b>ID / Nama:</b> ${k.id_karyawan} - ${k.nama}<br><b>Bank:</b> ${k.nama_bank || '-'} (${k.no_rekening || '-'})</p>
-      <table>
-        <tr><th>Komponen Gaji</th><th class="text-right">Nominal</th></tr>
-        <tr>
-          <td>Gaji Pokok (${totalHadir}/${targetHari} Hari Valid)</td>
-          <td class="text-right">Rp ${Math.round(totalHadir >= targetHari ? Number(k.gaji_pokok||0) : (Number(k.gaji_pokok||0)/targetHari)*totalHadir).toLocaleString('id-ID')}</td>
-        </tr>
-        <tr>
-          <td>Tunjangan Weekend (${weekend} Hari)</td>
-          <td class="text-right">Rp ${(weekend * 25000).toLocaleString('id-ID')}</td>
-        </tr>
-        <tr>
-          <td>
-            Tunjangan Transportasi Dasar (Rp 300.000)
-            ${potonganTransport > 0 ? `<br><small style="color:red;">*Dipotong ${potonganTransport / 10000} hari alpa/inkomplit (-Rp ${potonganTransport.toLocaleString('id-ID')})</small>` : ''}
-          </td>
-          <td class="text-right">Rp ${tnjTransport.toLocaleString('id-ID')}</td>
-        </tr>
-        <tr>
-          <td>Bonus Kehadiran Full</td>
-          <td class="text-right">Rp ${(totalHadir >= targetHari ? Number(k.bonus_kehadiran||0) : 0).toLocaleString('id-ID')}</td>
-        </tr>
-        <tr style="font-weight:bold; background:#f4f9f6;">
-          <td>TAKE HOME PAY (THP)</td>
-          <td class="text-right" style="color:#1b4d3e;">Rp ${thp.toLocaleString('id-ID')}</td>
-        </tr>
-      </table>
-      <button onclick="window.print()" style="padding:10px 20px;background:#1b4d3e;color:white;border:none;border-radius:5px;font-weight:bold;cursor:pointer;">Cetak PDF</button>
-    `);
-    w.document.close();
-  }
+    function bukaEditMember(id, nama, hp, status, start, stop, poin) {
+      document.getElementById('modal-title').innerText = "Edit Data Member";
+      document.getElementById('m-id').value = id;
+      document.getElementById('m-nama').value = nama;
+      document.getElementById('m-hp').value = hp;
+      document.getElementById('m-status').value = status;
+      document.getElementById('m-poin').value = poin;
+      document.getElementById('m-start').value = start || '';
+      document.getElementById('m-stop').value = stop || '';
+      document.getElementById('modal-member').classList.remove('hidden');
+      document.getElementById('modal-member').classList.add('flex');
+    }
 
-  function exportExcel() {
-    const ws = XLSX.utils.json_to_sheet(dataRiwayatGlobal);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Riwayat Absensi");
-    XLSX.writeFile(wb, `Laporan_Absensi_Padel_${new Date().toISOString().split('T')[0]}.xlsx`);
-  }
+    function tutupModalMember() {
+      document.getElementById('modal-member').classList.remove('flex');
+      document.getElementById('modal-member').classList.add('hidden');
+    }
 
-  function handleLogoutAdmin() {
-    localStorage.clear();
-    window.location.href = '/login.html';
-  }
+    async function simpanMember(e) {
+      e.preventDefault();
+      const payload = {
+        id_member: document.getElementById('m-id').value,
+        nama: document.getElementById('m-nama').value,
+        no_hp: document.getElementById('m-hp').value,
+        status_membership: document.getElementById('m-status').value,
+        total_poin: parseInt(document.getElementById('m-poin').value) || 0,
+        start_member: document.getElementById('m-start').value,
+        stop_member: document.getElementById('m-stop').value
+      };
 
-  window.onload = () => { muatDashboardAnalitik(); };
-</script>
+      try {
+        const res = await fetch('/api/member', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert("✅ Data member berhasil disimpan!");
+        tutupModalMember();
+        muatDataMember();
+      } catch (err) {
+        alert("❌ Error: " + err.message);
+      }
+    }
+
+    async function hapusMember(id) {
+      if (!confirm(`Yakin ingin menghapus member ${id}?`)) return;
+      try {
+        const res = await fetch(`/api/member/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+        alert("✅ Member berhasil dihapus!");
+        muatDataMember();
+      } catch (err) {
+        alert("❌ Error: " + err.message);
+      }
+    }
+
+    async function muatAbsensi() {
+      try {
+        const res = await fetch('/api/riwayat');
+        const data = await res.json();
+        const tbody = document.getElementById('tabel-absensi-body');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Belum ada riwayat absensi.</td></tr>`;
+          return;
+        }
+        data.forEach(a => {
+          tbody.innerHTML += `
+            <tr class="border-b border-slate-100">
+              <td class="p-3">${a.tanggal}</td>
+              <td class="p-3 font-bold">${a.nama || a.id_karyawan}</td>
+              <td class="p-3">${a.lokasi}</td>
+              <td class="p-3">${a.shift}</td>
+              <td class="p-3 text-emerald-600 font-bold">${a.waktu || '-'}</td>
+              <td class="p-3 text-rose-600 font-bold">${a.clock_out ? new Date(a.clock_out).toLocaleTimeString('id-ID') : 'Belum Out'}</td>
+            </tr>
+          `;
+        });
+      } catch (err) { console.error("Error load absensi:", err); }
+    }
+
+    async function muatGaji() {
+      try {
+        const res = await fetch('/api/gaji-lengkap');
+        const data = await res.json();
+        const tbody = document.getElementById('tabel-gaji-body');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Belum ada data gaji karyawan.</td></tr>`;
+          return;
+        }
+        data.forEach(g => {
+          const totalKotor = Number(g.gaji_pokok) + Number(g.tunjangan_shift) + Number(g.tunjangan_weekend) + Number(g.tunjangan_makan_transport);
+          tbody.innerHTML += `
+            <tr class="border-b border-slate-100">
+              <td class="p-3 font-bold">${g.id_karyawan}</td>
+              <td class="p-3 font-semibold">${g.nama}</td>
+              <td class="p-3">${g.no_hp}</td>
+              <td class="p-3">Rp ${Number(g.gaji_pokok).toLocaleString('id-ID')}</td>
+              <td class="p-3">Rp ${Number(g.tunjangan_shift + g.tunjangan_weekend + g.tunjangan_makan_transport).toLocaleString('id-ID')}</td>
+              <td class="p-3 font-bold text-emerald-700">Rp ${totalKotor.toLocaleString('id-ID')}</td>
+            </tr>
+          `;
+        });
+      } catch (err) { console.error("Error load gaji:", err); }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      muatDataBooking();
+      muatDataMember();
+      muatAbsensi();
+      muatGaji();
+    });
+  </script>
 </body>
 </html>
