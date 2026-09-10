@@ -74,13 +74,13 @@
 
       <div>
         <label class="block font-bold text-slate-700 uppercase mb-1">Tanggal Main</label>
-        <input type="date" id="b-tanggal" required class="w-full border border-slate-300 p-2.5 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none">
+        <input type="date" id="b-tanggal" required onchange="muatJadwalTerpakaiDanHitung()" class="w-full border border-slate-300 p-2.5 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none">
       </div>
 
-      <!-- DAFTAR PILIHAN COURT & JAM (VALIDASI UNIQUE COURT) -->
+      <!-- DAFTAR PILIHAN COURT & JAM (AUTO BLOCKING JADWAL TERPAKAI) -->
       <div class="space-y-2">
         <div class="flex justify-between items-center">
-          <label class="block font-bold text-slate-700 uppercase">Pilih Court & Jam Main (Court Tidak Boleh Sama)</label>
+          <label class="block font-bold text-slate-700 uppercase">Pilih Court & Jam Main (Jam Terisi Otomatis Terblokir)</label>
           <button type="button" onclick="tambahBarisCourt()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold transition">➕ Tambah Court Lain</button>
         </div>
         <div id="container-court-group" class="space-y-3">
@@ -120,6 +120,7 @@
 
   <script>
     let generatedIdBooking = "";
+    let jadwalTerpakaiMap = {}; // Menyimpan data jam yang sudah dibooking per court
     document.getElementById('b-tanggal').value = new Date().toISOString().split('T')[0];
 
     async function loadNextBookingId() {
@@ -134,17 +135,53 @@
       }
     }
 
+    async function fetchJadwalTerpakai() {
+      const tanggal = document.getElementById('b-tanggal').value;
+      jadwalTerpakaiMap = {};
+      try {
+        const res = await fetch(`/api/booking/terpakai?tanggal=${tanggal}`);
+        const data = await res.json();
+        
+        data.forEach(item => {
+          // Format lokasi di DB: "Padel Boss Mengger (Court 1 [08:00, 09:00] | Court 2 [19:00])"
+          // Atau format string detail_jam
+          for (let i = 1; i <= 5; i++) {
+            if (item.lokasi.includes(`Court ${i}`) || item.detail_jam.includes(`Court ${i}`)) {
+              if (!jadwalTerpakaiMap[`Court ${i}`]) jadwalTerpakaiMap[`Court ${i}`] = [];
+              
+              // Ambil jam yang tertera pada baris tersebut
+              daftarJam.forEach(jam => {
+                if (item.lokasi.includes(jam) || item.detail_jam.includes(jam)) {
+                  if (!jadwalTerpakaiMap[`Court ${i}`].includes(jam)) {
+                    jadwalTerpakaiMap[`Court ${i}`].push(jam);
+                  }
+                }
+              });
+            }
+          }
+        });
+      } catch (err) {
+        console.error("Gagal mengambil jadwal terpakai:", err);
+      }
+    }
+
+    async function muatJadwalTerpakaiDanHitung() {
+      await fetchJadwalTerpakai();
+      updateStatusJamCheckbox();
+      hitungTotal();
+    }
+
     const daftarCourt = ["Court 1", "Court 2", "Court 3", "Court 4", "Court 5"];
     const daftarJam = [
       "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", 
       "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"
     ];
 
-    function tambahBarisCourt() {
+    async function tambahBarisCourt() {
+      await fetchJadwalTerpakai();
       const container = document.getElementById('container-court-group');
       const rowId = Date.now();
 
-      // Cari court yang belum dipilih agar otomatis mencarikan pilihan yang tersedia
       const selectedCourts = Array.from(document.querySelectorAll('.select-court')).map(sel => sel.value);
       const availableCourt = daftarCourt.find(c => !selectedCourts.includes(c));
 
@@ -156,32 +193,50 @@
         <option value="${c}" ${c === availableCourt ? 'selected' : ''}>${c}</option>
       `).join('');
 
-      let checkboxesJam = daftarJam.map(j => `
-        <label class="flex items-center space-x-1 cursor-pointer bg-white px-2 py-1 rounded border border-slate-200 hover:bg-slate-100">
-          <input type="checkbox" value="${j}" onchange="hitungTotal()" class="rounded jam-checkbox"> 
-          <span class="font-semibold">${j}</span>
-        </label>
-      `).join('');
-
       const div = document.createElement('div');
       div.className = "bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 row-court-group";
       div.id = `group-${rowId}`;
       div.innerHTML = `
         <div class="flex justify-between items-center">
-          <select class="p-2 border rounded-lg bg-white font-bold text-slate-700 outline-none select-court" onchange="validasiDanHitung()">
+          <select class="p-2 border rounded-lg bg-white font-bold text-slate-700 outline-none select-court" onchange="updateStatusJamCheckbox(); validasiDanHitung();">
             ${opsiCourtHTML}
           </select>
           <button type="button" onclick="hapusBarisCourt('${rowId}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-2 py-1 rounded-lg text-[11px] font-bold transition">🗑️ Hapus Court Ini</button>
         </div>
         <div>
-          <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Pilih Jam Main pada Court Ini:</p>
-          <div class="grid grid-cols-4 gap-1.5 max-h-28 overflow-y-auto p-1 bg-white rounded-lg border border-slate-200">
-            ${checkboxesJam}
+          <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Pilih Jam Main pada Court Ini (Jam Merah = Sudah Dibooking):</p>
+          <div class="grid grid-cols-4 gap-1.5 max-h-28 overflow-y-auto p-1 bg-white rounded-lg border border-slate-200 container-jam-checkboxes">
+            <!-- Checkbox jam dirender dinamis -->
           </div>
         </div>
       `;
       container.appendChild(div);
+      updateStatusJamCheckbox();
       validasiDanHitung();
+    }
+
+    function updateStatusJamCheckbox() {
+      const groups = document.querySelectorAll('.row-court-group');
+      groups.forEach(group => {
+        const currentCourt = group.querySelector('.select-court').value;
+        const jamContainer = group.querySelector('.container-jam-checkboxes');
+        const terpakaiList = jadwalTerpakaiMap[currentCourt] || [];
+
+        let checkboxesHTML = '';
+        daftarJam.isAlreadyChecked = true;
+
+        daftarJam.forEach(j => {
+          const isBooked = terpakaiList.includes(j);
+          checkboxesHTML += `
+            <label class="flex items-center space-x-1 px-2 py-1 rounded border text-[11px] ${isBooked ? 'bg-rose-50 border-rose-200 text-rose-400 cursor-not-allowed' : 'bg-white border-slate-200 hover:bg-slate-100 cursor-pointer'}">
+              <input type="checkbox" value="${j}" onchange="hitungTotal()" class="rounded jam-checkbox" ${isBooked ? 'disabled' : ''}> 
+              <span class="font-semibold">${j}</span>
+              ${isBooked ? '<span class="text-[9px] font-bold text-rose-600 block">(Terisi)</span>' : ''}
+            </label>
+          `;
+        });
+        jamContainer.innerHTML = checkboxesHTML;
+      });
     }
 
     function hapusBarisCourt(rowId) {
@@ -194,7 +249,6 @@
     }
 
     function validasiDanHitung() {
-      // Cek apakah ada court yang dipilih ganda
       const courtSelects = document.querySelectorAll('.select-court');
       let seenCourts = new Set();
       let hasDuplicate = false;
@@ -261,9 +315,8 @@
     async function kirimBooking(e) {
       e.preventDefault();
       
-      // Validasi duplikat court sebelum submit
       if (!validasiDanHitung()) {
-        return alert("Terdapat pilihan Court yang sama/ganda. Mohon pilih Court yang berbeda!");
+        return alert("Terdapat pilihan Court yang sama/ganda. Mohon periksa kembali!");
       }
 
       const groups = document.querySelectorAll('.row-court-group');
@@ -295,7 +348,7 @@
           id_member: m.id_member || '',
           nama: m.nama || document.getElementById('b-nama').value,
           no_hp: m.no_hp || document.getElementById('b-hp').value,
-          lokasi: `Padel Boss Mengger`,
+          lokasi: `Padel Boss Mengger (${rincianList.join(' | ')})`,
           tanggal: document.getElementById('b-tanggal').value,
           detail_jam: rincianList.join(' | '),
           total_bayar: calculatedTotalBayar,
@@ -327,8 +380,9 @@
       reader.readAsDataURL(fileInput.files[0]);
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       loadNextBookingId();
+      await fetchJadwalTerpakai();
     });
   </script>
 </body>
