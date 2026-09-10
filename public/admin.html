@@ -11,13 +11,11 @@
   <!-- SIDEBAR NAVIGATION -->
   <aside class="w-full md:w-64 bg-[#1b4d3e] text-white flex flex-col justify-between shadow-xl md:min-h-screen sticky top-0 z-50">
     <div class="p-6 space-y-6">
-      <!-- BRANDING -->
       <div class="border-b border-emerald-800 pb-4">
         <span class="text-[10px] font-bold tracking-widest text-[#d99e12] uppercase block">ADMINISTRATOR PORTAL</span>
         <h1 class="text-base font-black tracking-tight mt-0.5">Padel Boss & Del Luna</h1>
       </div>
 
-      <!-- MENU LIST -->
       <nav class="space-y-1 text-xs font-bold">
         <button onclick="switchTab('tab-booking')" id="btn-tab-booking" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-emerald-900/80 text-white transition">
           <span class="text-base">📅</span>
@@ -35,10 +33,13 @@
           <span class="text-base">💰</span>
           <span>Master Karyawan & Gaji</span>
         </button>
+        <button onclick="switchTab('tab-payroll')" id="btn-tab-payroll" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition">
+          <span class="text-base">🧮</span>
+          <span>Kalkulator & Slip Gaji</span>
+        </button>
       </nav>
     </div>
 
-    <!-- USER SESSION & LOGOUT -->
     <div class="p-6 border-t border-emerald-800 bg-emerald-950/30 flex items-center justify-between">
       <div>
         <p class="text-[10px] text-emerald-300 uppercase font-semibold">Masuk Sebagai</p>
@@ -53,129 +54,161 @@
   <!-- MAIN CONTENT AREA -->
   <main class="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto max-w-full">
 
-    <!-- 1. KONTEN TAB BOOKING -->
+    <!-- 1. TAB BOOKING -->
     <section id="tab-booking" class="tab-content space-y-4">
-      <div class="flex justify-between items-center">
-        <div>
-          <h2 class="text-xl font-black text-slate-800">Daftar Booking Lapangan</h2>
-          <p class="text-xs text-slate-500">Kelola jadwal booking dan verifikasi bukti transfer pembayaran customer.</p>
-        </div>
-      </div>
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr class="bg-slate-100 text-slate-700">
-                <th class="p-3">ID Booking</th>
-                <th class="p-3">Pemesan</th>
-                <th class="p-3">No. HP</th>
-                <th class="p-3">Lokasi / Court</th>
-                <th class="p-3">Jadwal Main</th>
-                <th class="p-3">Total Bayar</th>
-                <th class="p-3">Poin</th>
-                <th class="p-3 text-center">Bukti Transfer</th>
-              </tr>
-            </thead>
-            <tbody id="tabel-booking-body">
-              <tr><td colspan="8" class="p-6 text-center text-slate-400">Memuat data booking...</td></tr>
-            </tbody>
-          </table>
-        </div>
+      <h2 class="text-xl font-black text-slate-800">Daftar Booking Lapangan</h2>
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700">
+              <th class="p-3">ID Booking</th>
+              <th class="p-3">Pemesan</th>
+              <th class="p-3">No. HP</th>
+              <th class="p-3">Lokasi</th>
+              <th class="p-3">Jadwal Main</th>
+              <th class="p-3">Total Bayar</th>
+              <th class="p-3">Poin</th>
+              <th class="p-3 text-center">Bukti Transfer</th>
+            </tr>
+          </thead>
+          <tbody id="tabel-booking-body">
+            <tr><td colspan="8" class="p-6 text-center text-slate-400">Memuat data...</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
-    <!-- 2. KONTEN TAB MEMBER (CRUD) -->
+    <!-- 2. TAB MEMBER -->
     <section id="tab-member" class="tab-content space-y-4 hidden">
       <div class="flex justify-between items-center">
-        <div>
-          <h2 class="text-xl font-black text-slate-800">Database Member Padel Boss</h2>
-          <p class="text-xs text-slate-500">Kelola data keanggotaan, masa berlaku, dan total poin reward member.</p>
-        </div>
-        <button onclick="bukaModalMember()" class="bg-[#1b4d3e] hover:bg-[#14382d] text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition">➕ Tambah Member Baru</button>
+        <h2 class="text-xl font-black text-slate-800">Database Member Padel Boss</h2>
+        <button onclick="bukaModalMember()" class="bg-[#1b4d3e] text-white px-4 py-2.5 rounded-xl text-xs font-bold">➕ Tambah Member</button>
       </div>
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr class="bg-slate-100 text-slate-700">
-                <th class="p-3">ID Member</th>
-                <th class="p-3">Nama Member</th>
-                <th class="p-3">No. WhatsApp</th>
-                <th class="p-3">Status</th>
-                <th class="p-3">Masa Berlaku (Start - Stop)</th>
-                <th class="p-3">Poin Reward</th>
-                <th class="p-3 text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="tabel-member-body">
-              <tr><td colspan="7" class="p-6 text-center text-slate-400">Memuat data member...</td></tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700">
+              <th class="p-3">ID Member</th>
+              <th class="p-3">Nama</th>
+              <th class="p-3">No. WhatsApp</th>
+              <th class="p-3">Status</th>
+              <th class="p-3">Masa Berlaku</th>
+              <th class="p-3">Poin</th>
+              <th class="p-3 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tabel-member-body">
+            <tr><td colspan="7" class="p-6 text-center text-slate-400">Memuat data...</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
-    <!-- 3. KONTEN TAB ABSENSI -->
+    <!-- 3. TAB ABSENSI -->
     <section id="tab-absensi" class="tab-content space-y-4 hidden">
-      <div class="flex justify-between items-center">
-        <div>
-          <h2 class="text-xl font-black text-slate-800">Rekap Absensi Karyawan</h2>
-          <p class="text-xs text-slate-500">Pantau kehadiran dan pencatatan waktu real-time karyawan.</p>
-        </div>
-      </div>
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr class="bg-slate-100 text-slate-700">
-                <th class="p-3">Tanggal</th>
-                <th class="p-3">Karyawan</th>
-                <th class="p-3">Lokasi</th>
-                <th class="p-3">Shift</th>
-                <th class="p-3">Clock In</th>
-                <th class="p-3">Clock Out</th>
-              </tr>
-            </thead>
-            <tbody id="tabel-absensi-body">
-              <tr><td colspan="6" class="p-6 text-center text-slate-400">Memuat riwayat absensi...</td></tr>
-            </tbody>
-          </table>
-        </div>
+      <h2 class="text-xl font-black text-slate-800">Rekap Absensi Karyawan</h2>
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700">
+              <th class="p-3">Tanggal</th>
+              <th class="p-3">Karyawan</th>
+              <th class="p-3">Lokasi</th>
+              <th class="p-3">Shift</th>
+              <th class="p-3">Clock In</th>
+              <th class="p-3">Clock Out</th>
+            </tr>
+          </thead>
+          <tbody id="tabel-absensi-body">
+            <tr><td colspan="6" class="p-6 text-center text-slate-400">Memuat data...</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
-    <!-- 4. KONTEN TAB KARYAWAN & GAJI -->
+    <!-- 4. TAB KARYAWAN & GAJI -->
     <section id="tab-karyawan" class="tab-content space-y-4 hidden">
-      <div class="flex justify-between items-center">
-        <div>
-          <h2 class="text-xl font-black text-slate-800">Master Karyawan & Komponen Gaji</h2>
-          <p class="text-xs text-slate-500">Pengelolaan profil staf dan rincian komponen gaji.</p>
-        </div>
+      <h2 class="text-xl font-black text-slate-800">Master Karyawan & Komponen Gaji</h2>
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700">
+              <th class="p-3">ID</th>
+              <th class="p-3">Nama</th>
+              <th class="p-3">No. HP</th>
+              <th class="p-3">Gaji Pokok</th>
+              <th class="p-3">Total Tunjangan</th>
+              <th class="p-3">Total Gaji Kotor</th>
+            </tr>
+          </thead>
+          <tbody id="tabel-gaji-body">
+            <tr><td colspan="6" class="p-6 text-center text-slate-400">Memuat data...</td></tr>
+          </tbody>
+        </table>
       </div>
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr class="bg-slate-100 text-slate-700">
-                <th class="p-3">ID</th>
-                <th class="p-3">Nama</th>
-                <th class="p-3">No. HP</th>
-                <th class="p-3">Gaji Pokok</th>
-                <th class="p-3">Total Tunjangan</th>
-                <th class="p-3">Total Gaji Kotor</th>
-              </tr>
-            </thead>
-            <tbody id="tabel-gaji-body">
-              <tr><td colspan="6" class="p-6 text-center text-slate-400">Memuat data gaji...</td></tr>
-            </tbody>
-          </table>
+    </section>
+
+    <!-- 5. TAB KALKULATOR & SLIP GAJI -->
+    <section id="tab-payroll" class="tab-content space-y-4 hidden">
+      <h2 class="text-xl font-black text-slate-800">Kalkulator Penggajian & Cetak Slip Gaji</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+          <h3 class="font-bold text-sm text-[#1b4d3e]">Pilih Karyawan</h3>
+          <select id="p-karyawan" onchange="hitungGajiKalkulator()" class="w-full p-2.5 border rounded-xl font-bold text-xs bg-slate-50">
+            <!-- Pilihan dirender via JS -->
+          </select>
+          <div class="space-y-2 text-xs pt-2">
+            <div>
+              <label class="font-semibold text-slate-600">Gaji Pokok (Rp)</label>
+              <input type="number" id="calc-pokok" oninput="hitungGajiKalkulator()" class="w-full p-2 border rounded-lg font-bold">
+            </div>
+            <div>
+              <label class="font-semibold text-slate-600">Tunjangan Shift (Rp)</label>
+              <input type="number" id="calc-tunjangan" oninput="hitungGajiKalkulator()" class="w-full p-2 border rounded-lg font-bold">
+            </div>
+            <div>
+              <label class="font-semibold text-slate-600">Bonus Kehadiran (Rp)</label>
+              <input type="number" id="calc-bonus" oninput="hitungGajiKalkulator()" class="w-full p-2 border rounded-lg font-bold">
+            </div>
+            <div>
+              <label class="font-semibold text-slate-600">Potongan Lain (Rp)</label>
+              <input type="number" id="calc-potongan" oninput="hitungGajiKalkulator()" class="w-full p-2 border rounded-lg font-bold text-rose-600">
+            </div>
+          </div>
+        </div>
+
+        <!-- PREVIEW SLIP GAJI -->
+        <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <div id="slip-gaji-area" class="space-y-4">
+            <div class="text-center border-b pb-3">
+              <h4 class="font-black text-sm text-[#1b4d3e]">SLIP GAJI KARYAWAN PADEL BOSS</h4>
+              <p class="text-[11px] text-slate-500">Periode Gaji Bulan Ini</p>
+            </div>
+            <div class="grid grid-cols-2 text-xs gap-2 border-b pb-3">
+              <div><span class="text-slate-500">ID:</span> <span id="slip-id" class="font-bold">-</span></div>
+              <div><span class="text-slate-500">Nama:</span> <span id="slip-nama" class="font-bold">-</span></div>
+            </div>
+            <div class="space-y-1.5 text-xs">
+              <div class="flex justify-between"><span>Gaji Pokok:</span> <span id="s-pokok" class="font-bold">Rp 0</span></div>
+              <div class="flex justify-between"><span>Tunjangan Shift:</span> <span id="s-tunjangan" class="font-bold">Rp 0</span></div>
+              <div class="flex justify-between"><span>Bonus Kehadiran:</span> <span id="s-bonus" class="font-bold">Rp 0</span></div>
+              <div class="flex justify-between text-rose-600"><span>Potongan:</span> <span id="s-potongan" class="font-bold">Rp 0</span></div>
+            </div>
+            <div class="border-t pt-3 flex justify-between items-center bg-emerald-50 p-3 rounded-xl">
+              <span class="font-bold text-emerald-900 text-xs">TOTAL GAJI BERSIH (NET):</span>
+              <span id="s-total" class="font-black text-emerald-700 text-base">Rp 0</span>
+            </div>
+          </div>
+          <button onclick="window.print()" class="mt-4 bg-[#1b4d3e] hover:bg-[#14382d] text-white py-3 rounded-xl font-bold text-xs transition shadow-sm">
+            🖨️ Cetak / Download Slip Gaji
+          </button>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- MODAL TAMBAH/EDIT MEMBER -->
+  <!-- MODAL MEMBER -->
   <div id="modal-member" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl">
       <h3 id="modal-title" class="font-black text-base text-[#1b4d3e]">Tambah Member Baru</h3>
@@ -186,11 +219,11 @@
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Member</label>
-          <input type="text" id="m-nama" required placeholder="Nama sesuai member" class="w-full border border-slate-300 p-2.5 rounded-xl font-medium outline-none focus:ring-2 focus:ring-[#1b4d3e]">
+          <input type="text" id="m-nama" required class="w-full border border-slate-300 p-2.5 rounded-xl font-medium outline-none focus:ring-2 focus:ring-[#1b4d3e]">
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">No. WhatsApp</label>
-          <input type="text" id="m-hp" required placeholder="628..." class="w-full border border-slate-300 p-2.5 rounded-xl font-medium outline-none focus:ring-2 focus:ring-[#1b4d3e]">
+          <input type="text" id="m-hp" required class="w-full border border-slate-300 p-2.5 rounded-xl font-medium outline-none focus:ring-2 focus:ring-[#1b4d3e]">
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
@@ -223,8 +256,10 @@
     </div>
   </div>
 
-  <!-- SCRIPT UTAMA ADMIN -->
+  <!-- SCRIPT -->
   <script>
+    let listMasterGaji = [];
+
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.sidebar-btn').forEach(el => {
@@ -406,14 +441,18 @@
     async function muatGaji() {
       try {
         const res = await fetch('/api/gaji-lengkap');
-        const data = await res.json();
+        listMasterGaji = await res.json();
         const tbody = document.getElementById('tabel-gaji-body');
+        const selectKaryawan = document.getElementById('p-karyawan');
         tbody.innerHTML = '';
-        if (data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Belum ada data gaji karyawan.</td></tr>`;
+        selectKaryawan.innerHTML = '';
+
+        if (listMasterGaji.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Belum ada data gaji.</td></tr>`;
           return;
         }
-        data.forEach(g => {
+
+        listMasterGaji.forEach((g, index) => {
           const totalKotor = Number(g.gaji_pokok) + Number(g.tunjangan_shift) + Number(g.tunjangan_weekend) + Number(g.tunjangan_makan_transport);
           tbody.innerHTML += `
             <tr class="border-b border-slate-100">
@@ -425,8 +464,47 @@
               <td class="p-3 font-bold text-emerald-700">Rp ${totalKotor.toLocaleString('id-ID')}</td>
             </tr>
           `;
+          selectKaryawan.innerHTML += `<option value="${index}">${g.id_karyawan} - ${g.nama}</option>`;
         });
+
+        if (listMasterGaji.length > 0) {
+          isiKalkulator(0);
+        }
       } catch (err) { console.error("Error load gaji:", err); }
+    }
+
+    function isiKalkulator(idx) {
+      const g = listMasterGaji[idx];
+      if (!g) return;
+      document.getElementById('calc-pokok').value = g.gaji_pokok || 0;
+      document.getElementById('calc-tunjangan').value = (g.tunjangan_shift + g.tunjangan_weekend + g.tunjangan_makan_transport) || 0;
+      document.getElementById('calc-bonus').value = g.bonus_kehadiran || 0;
+      document.getElementById('calc-potongan').value = g.potongan_lain || 0;
+      hitungGajiKalkulator();
+    }
+
+    document.getElementById('p-karyawan').addEventListener('change', function() {
+      isiKalkulator(this.value);
+    });
+
+    function hitungGajiKalkulator() {
+      const idx = document.getElementById('p-karyawan').value;
+      const g = listMasterGaji[idx] || {};
+      
+      const pokok = parseFloat(document.getElementById('calc-pokok').value) || 0;
+      const tunjangan = parseFloat(document.getElementById('calc-tunjangan').value) || 0;
+      const bonus = parseFloat(document.getElementById('calc-bonus').value) || 0;
+      const potongan = parseFloat(document.getElementById('calc-potongan').value) || 0;
+
+      const totalNet = (pokok + tunjangan + bonus) - potongan;
+
+      document.getElementById('slip-id').innerText = g.id_karyawan || '-';
+      document.getElementById('slip-nama').innerText = g.nama || '-';
+      document.getElementById('s-pokok').innerText = `Rp ${pokok.toLocaleString('id-ID')}`;
+      document.getElementById('s-tunjangan').innerText = `Rp ${tunjangan.toLocaleString('id-ID')}`;
+      document.getElementById('s-bonus').innerText = `Rp ${bonus.toLocaleString('id-ID')}`;
+      document.getElementById('s-potongan').innerText = `Rp ${potongan.toLocaleString('id-ID')}`;
+      document.getElementById('s-total').innerText = `Rp ${totalNet.toLocaleString('id-ID')}`;
     }
 
     window.addEventListener('DOMContentLoaded', () => {
