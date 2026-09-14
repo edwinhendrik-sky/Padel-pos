@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-br from-[#1b4d3e] via-[#2c5e4a] to-[#d99e12] min-h-screen flex items-center justify-center p-4 font-sans text-slate-800">
-
   <div class="w-full max-w-sm bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-amber-200/40 p-6 space-y-6">
     <div class="text-center space-y-1">
       <span class="text-[10px] font-bold tracking-widest text-[#d99e12] uppercase block">MEMBER PORTAL</span>
@@ -18,46 +17,35 @@
     <form onsubmit="prosesLoginMember(event)" class="space-y-4 text-xs">
       <div>
         <label class="block font-bold text-slate-700 uppercase mb-1">ID Member</label>
-        <input type="text" id="member-id" required placeholder="Contoh: PB0010" class="w-full border border-slate-300 p-3 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none text-center text-sm font-bold uppercase">
+        <input type="text" id="member-id" required placeholder="Contoh: PB0010" class="w-full border p-3 rounded-xl bg-white text-center text-sm font-bold uppercase">
       </div>
-
-      <button type="submit" class="w-full bg-[#1b4d3e] hover:bg-[#14382d] text-white py-3 rounded-xl font-bold text-sm shadow-md transition">
-        Masuk ke Menu Booking & Poin
-      </button>
+      <button type="submit" class="w-full bg-[#1b4d3e] hover:bg-[#14382d] text-white py-3 rounded-xl font-bold text-sm shadow-md">Masuk ke Menu Booking & Poin</button>
     </form>
-
-    <div class="text-center pt-3 border-t border-slate-200 space-y-2">
-      <p class="text-[11px] text-slate-500">Gunakan ID Member terdaftar (PB0010 - PB0045)</p>
-      <a href="/login.html" class="block text-xs text-slate-500 hover:text-[#1b4d3e] font-semibold transition">
-        ← Kembali ke Login Karyawan / Admin
-      </a>
-    </div>
   </div>
 
   <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      localStorage.removeItem('member_padel'); // Auto-clear sesi lama
+    });
+
     async function prosesLoginMember(e) {
       e.preventDefault();
       const idMember = document.getElementById('member-id').value.trim().toUpperCase();
-      if (!idMember) return alert("Masukkan ID Member Anda!");
+      if (!idMember) return alert("Masukkan ID Member!");
 
       try {
         const res = await fetch(`/api/member/login/${encodeURIComponent(idMember)}`);
-        const data = await res.json();
-        
-        if (!res.ok) throw new Error(data.error || "ID Member tidak ditemukan.");
+        const textResponse = await res.text();
+        let data;
+        try { data = JSON.parse(textResponse); } catch(e) { throw new Error(textResponse); }
+        if (!res.ok) throw new Error(data.error || "ID tidak ditemukan");
 
         localStorage.setItem('member_padel', JSON.stringify({
-          id_member: data.id_member,
-          no_hp: data.no_hp,
-          nama: data.nama,
-          status_membership: data.status_membership,
-          total_poin: data.total_poin || 0
+          id_member: data.id_member, no_hp: data.no_hp, nama: data.nama,
+          status_membership: data.status_membership, total_poin: data.total_poin || 0
         }));
-
         window.location.replace('/booking.html');
-      } catch (err) {
-        alert("Gagal Login: " + err.message);
-      }
+      } catch (err) { alert("Gagal Login: " + err.message); }
     }
   </script>
 </body>

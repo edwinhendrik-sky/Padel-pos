@@ -6,93 +6,84 @@
   <title>Booking Lapangan & Poin Member - Padel Boss Mengger</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    const savedMember = localStorage.getItem('member_padel');
-    if (!savedMember) {
-      window.location.replace('/login-member.html');
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramMemberId = urlParams.get('member') || urlParams.get('id');
+
+    if (paramMemberId) {
+      fetch(`/api/member/login/${encodeURIComponent(paramMemberId)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.id_member) {
+            localStorage.setItem('member_padel', JSON.stringify({
+              id_member: data.id_member, no_hp: data.no_hp, nama: data.nama,
+              status_membership: data.status_membership, total_poin: data.total_poin || 0
+            }));
+            window.location.replace('/booking.html');
+          } else {
+            window.location.replace('/login-member.html');
+          }
+        }).catch(() => { window.location.replace('/login-member.html'); });
     } else {
-      try {
-        const m = JSON.parse(savedMember);
-        window.addEventListener('DOMContentLoaded', () => {
-          if (document.getElementById('b-hp')) {
-            document.getElementById('b-hp').value = m.no_hp || '';
-          }
-          if (document.getElementById('b-nama')) {
-            document.getElementById('b-nama').value = m.nama || '';
-          }
-          if (document.getElementById('info-total-poin')) {
-            document.getElementById('info-total-poin').innerText = `${m.total_poin || 0} Poin`;
-          }
-          if (document.getElementById('status-member-hp')) {
-            document.getElementById('status-member-hp').innerText = `ID: ${m.id_member} | ${m.nama}`;
-          }
-          tambahBarisCourt();
-        });
-      } catch (e) {
-        localStorage.removeItem('member_padel');
+      const savedMember = localStorage.getItem('member_padel');
+      if (!savedMember) {
         window.location.replace('/login-member.html');
+      } else {
+        try {
+          const m = JSON.parse(savedMember);
+          window.addEventListener('DOMContentLoaded', () => {
+            if (document.getElementById('b-hp')) document.getElementById('b-hp').value = m.no_hp || '';
+            if (document.getElementById('b-nama')) document.getElementById('b-nama').value = m.nama || '';
+            if (document.getElementById('info-total-poin')) document.getElementById('info-total-poin').innerText = `${m.total_poin || 0} Poin`;
+            if (document.getElementById('status-member-hp')) document.getElementById('status-member-hp').innerText = `ID: ${m.id_member} | ${m.nama}`;
+            tambahBarisCourt();
+          });
+        } catch (e) {
+          localStorage.removeItem('member_padel');
+          window.location.replace('/login-member.html');
+        }
       }
     }
   </script>
 </head>
 <body class="bg-gradient-to-br from-[#1b4d3e] via-[#2c5e4a] to-[#d99e12] min-h-screen flex items-center justify-center p-4 font-sans text-slate-800">
-
   <div class="w-full max-w-xl bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-amber-200/40 p-6 space-y-4 my-4">
-    
     <div class="flex justify-between items-center border-b pb-3">
       <div>
         <span class="text-[10px] font-bold tracking-widest text-[#d99e12] uppercase block">CUSTOMER BOOKING & REWARD PORTAL</span>
         <h1 class="text-lg font-black text-[#1b4d3e]">Padel Boss Mengger</h1>
         <p class="text-xs text-slate-500">ID Booking: <span id="label-id-booking" class="font-bold text-amber-600">Memuat...</span></p>
       </div>
-      <button onclick="logoutMember()" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold transition">
-        🚪 Logout
-      </button>
+      <button onclick="logoutMember()" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold transition">🚪 Logout</button>
     </div>
 
-    <!-- KARTU INFORMASI POIN MEMBER -->
     <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl flex justify-between items-center">
       <div>
         <p class="text-[11px] font-bold text-amber-900">Total Poin Member Anda:</p>
         <p class="text-[10px] text-amber-700" id="status-member-hp">Memuat status...</p>
       </div>
-      <div class="text-right">
-        <span class="text-base font-black text-amber-800" id="info-total-poin">0 Poin</span>
-      </div>
+      <div class="text-right"><span class="text-base font-black text-amber-800" id="info-total-poin">0 Poin</span></div>
     </div>
 
     <form onsubmit="kirimBooking(event)" class="space-y-3 text-xs">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <div>
-          <label class="block font-bold text-slate-700 uppercase mb-1">Nama Member</label>
-          <input type="text" id="b-nama" required class="w-full border border-slate-200 p-2.5 rounded-xl bg-slate-100 font-bold text-slate-700 outline-none" readonly>
-        </div>
-        <div>
-          <label class="block font-bold text-slate-700 uppercase mb-1">No. WhatsApp / HP</label>
-          <input type="text" id="b-hp" required class="w-full border border-slate-200 p-2.5 rounded-xl bg-slate-100 font-bold text-slate-600 outline-none" readonly>
-        </div>
+        <div><label class="block font-bold text-slate-700 uppercase mb-1">Nama Member</label><input type="text" id="b-nama" required class="w-full border p-2.5 rounded-xl bg-slate-100 font-bold" readonly></div>
+        <div><label class="block font-bold text-slate-700 uppercase mb-1">No. WhatsApp</label><input type="text" id="b-hp" required class="w-full border p-2.5 rounded-xl bg-slate-100 font-bold" readonly></div>
       </div>
 
-      <div>
-        <label class="block font-bold text-slate-700 uppercase mb-1">Tanggal Main</label>
-        <input type="date" id="b-tanggal" required onchange="muatJadwalTerpakaiDanHitung()" class="w-full border border-slate-300 p-2.5 rounded-xl bg-white font-medium focus:ring-2 focus:ring-[#d99e12] outline-none">
-      </div>
+      <div><label class="block font-bold text-slate-700 uppercase mb-1">Tanggal Main</label><input type="date" id="b-tanggal" required onchange="muatJadwalTerpakaiDanHitung()" class="w-full border p-2.5 rounded-xl bg-white font-medium"></div>
 
-      <!-- DAFTAR PILIHAN COURT & JAM (AUTO BLOCKING JADWAL TERPAKAI) -->
       <div class="space-y-2">
         <div class="flex justify-between items-center">
-          <label class="block font-bold text-slate-700 uppercase">Pilih Court & Jam Main (Jam Terisi Otomatis Terblokir)</label>
-          <button type="button" onclick="tambahBarisCourt()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold transition">➕ Tambah Court Lain</button>
+          <label class="block font-bold text-slate-700 uppercase">Pilih Court & Jam Main</label>
+          <button type="button" onclick="tambahBarisCourt()" class="bg-emerald-600 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold">➕ Tambah Court</button>
         </div>
-        <div id="container-court-group" class="space-y-3">
-          <!-- Baris dinamis court & jam akan dimasukkan di sini -->
-        </div>
+        <div id="container-court-group" class="space-y-3"></div>
       </div>
 
-      <!-- KARTU RINCIAN TOTAL & POIN -->
       <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex justify-between items-center">
         <div>
-          <p class="text-[11px] font-bold text-emerald-800">Rincian Total Pembayaran & Poin:</p>
-          <p class="text-[10px] text-slate-600" id="info-rincian">0 jam total dipilih</p>
+          <p class="text-[11px] font-bold text-emerald-800">Rincian Total & Poin:</p>
+          <p class="text-[10px] text-slate-600" id="info-rincian">0 jam total</p>
         </div>
         <div class="text-right">
           <span class="text-base font-black text-emerald-700 block" id="info-total-bayar">Rp 0</span>
@@ -100,27 +91,23 @@
         </div>
       </div>
 
-      <!-- INFORMASI REKENING RESMI PADEL BOSS -->
       <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl space-y-1">
-        <p class="text-[11px] font-black text-blue-900 uppercase">Rekening Padel BOSS (Resmi):</p>
-        <p class="text-[11px] text-slate-700 font-semibold">No. Rekening: <span class="text-blue-900 font-bold">085-628-8999</span> (Bank BCA)</p>
-        <p class="text-[11px] text-slate-700">Atas Nama: <span class="font-bold text-slate-900">SHIRLEEN YOVITA WI / DEASY L</span></p>
+        <p class="text-[11px] font-black text-blue-900 uppercase">Rekening Resmi Padel BOSS:</p>
+        <p class="text-[11px] text-slate-700 font-semibold">No. Rek: <span class="text-blue-900 font-bold">085-628-8999</span> (BCA) a.n. SHIRLEEN / DEASY</p>
       </div>
 
       <div>
-        <label class="block font-bold text-slate-700 uppercase mb-1">Upload Bukti Transfer Pembayaran</label>
-        <input type="file" id="b-bukti" accept="image/*" required class="w-full border border-slate-300 p-2 rounded-xl bg-slate-50 text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#1b4d3e] file:text-white hover:file:bg-[#14382d] cursor-pointer">
+        <label class="block font-bold text-slate-700 uppercase mb-1">Upload Bukti Transfer</label>
+        <input type="file" id="b-bukti" accept="image/*" required class="w-full border p-2 rounded-xl bg-slate-50 text-xs">
       </div>
 
-      <button type="submit" class="w-full bg-[#1b4d3e] hover:bg-[#14382d] text-white py-3 rounded-xl font-bold text-sm shadow-md transition mt-2">
-        Kirim Booking & Klaim Poin
-      </button>
+      <button type="submit" class="w-full bg-[#1b4d3e] hover:bg-[#14382d] text-white py-3 rounded-xl font-bold text-sm shadow-md transition">Kirim Booking & Klaim Poin</button>
     </form>
   </div>
 
   <script>
     let generatedIdBooking = "";
-    let jadwalTerpakaiMap = {}; // Menyimpan data jam yang sudah dibooking per court
+    let jadwalTerpakaiMap = {};
     document.getElementById('b-tanggal').value = new Date().toISOString().split('T')[0];
 
     async function loadNextBookingId() {
@@ -129,10 +116,7 @@
         const data = await res.json();
         generatedIdBooking = data.id_booking;
         document.getElementById('label-id-booking').innerText = generatedIdBooking;
-      } catch (err) {
-        generatedIdBooking = "BKG-GENERAL";
-        document.getElementById('label-id-booking').innerText = generatedIdBooking;
-      }
+      } catch (err) { generatedIdBooking = "BKG-GENERAL"; }
     }
 
     async function fetchJadwalTerpakai() {
@@ -141,28 +125,19 @@
       try {
         const res = await fetch(`/api/booking/terpakai?tanggal=${tanggal}`);
         const data = await res.json();
-        
         data.forEach(item => {
-          // Format lokasi di DB: "Padel Boss Mengger (Court 1 [08:00, 09:00] | Court 2 [19:00])"
-          // Atau format string detail_jam
           for (let i = 1; i <= 5; i++) {
             if (item.lokasi.includes(`Court ${i}`) || item.detail_jam.includes(`Court ${i}`)) {
               if (!jadwalTerpakaiMap[`Court ${i}`]) jadwalTerpakaiMap[`Court ${i}`] = [];
-              
-              // Ambil jam yang tertera pada baris tersebut
               daftarJam.forEach(jam => {
                 if (item.lokasi.includes(jam) || item.detail_jam.includes(jam)) {
-                  if (!jadwalTerpakaiMap[`Court ${i}`].includes(jam)) {
-                    jadwalTerpakaiMap[`Court ${i}`].push(jam);
-                  }
+                  if (!jadwalTerpakaiMap[`Court ${i}`].includes(jam)) jadwalTerpakaiMap[`Court ${i}`].push(jam);
                 }
               });
             }
           }
         });
-      } catch (err) {
-        console.error("Gagal mengambil jadwal terpakai:", err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     async function muatJadwalTerpakaiDanHitung() {
@@ -172,44 +147,29 @@
     }
 
     const daftarCourt = ["Court 1", "Court 2", "Court 3", "Court 4", "Court 5"];
-    const daftarJam = [
-      "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", 
-      "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"
-    ];
+    const daftarJam = ["06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"];
 
     async function tambahBarisCourt() {
       await fetchJadwalTerpakai();
       const container = document.getElementById('container-court-group');
       const rowId = Date.now();
-
       const selectedCourts = Array.from(document.querySelectorAll('.select-court')).map(sel => sel.value);
       const availableCourt = daftarCourt.find(c => !selectedCourts.includes(c));
+      if (!availableCourt) return alert("Semua 5 Court sudah dipilih!");
 
-      if (!availableCourt) {
-        return alert("Semua 5 Court sudah dipilih!");
-      }
-
-      let opsiCourtHTML = daftarCourt.map(c => `
-        <option value="${c}" ${c === availableCourt ? 'selected' : ''}>${c}</option>
-      `).join('');
-
+      let opsiCourtHTML = daftarCourt.map(c => `<option value="${c}" ${c === availableCourt ? 'selected' : ''}>${c}</option>`).join('');
       const div = document.createElement('div');
       div.className = "bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 row-court-group";
       div.id = `group-${rowId}`;
       div.innerHTML = `
         <div class="flex justify-between items-center">
-          <select class="p-2 border rounded-lg bg-white font-bold text-slate-700 outline-none select-court" onchange="updateStatusJamCheckbox(); validasiDanHitung();">
-            ${opsiCourtHTML}
-          </select>
-          <button type="button" onclick="hapusBarisCourt('${rowId}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-2 py-1 rounded-lg text-[11px] font-bold transition">🗑️ Hapus Court Ini</button>
+          <select class="p-2 border rounded-lg bg-white font-bold select-court" onchange="updateStatusJamCheckbox(); validasiDanHitung();">${opsiCourtHTML}</select>
+          <button type="button" onclick="hapusBarisCourt('${rowId}')" class="bg-rose-100 text-rose-700 px-2 py-1 rounded-lg text-[11px] font-bold">🗑️ Hapus</button>
         </div>
         <div>
-          <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Pilih Jam Main pada Court Ini (Jam Merah = Sudah Dibooking):</p>
-          <div class="grid grid-cols-4 gap-1.5 max-h-28 overflow-y-auto p-1 bg-white rounded-lg border border-slate-200 container-jam-checkboxes">
-            <!-- Checkbox jam dirender dinamis -->
-          </div>
-        </div>
-      `;
+          <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Pilih Jam (Merah = Terisi):</p>
+          <div class="grid grid-cols-4 gap-1.5 max-h-28 overflow-y-auto p-1 bg-white rounded-lg border container-jam-checkboxes"></div>
+        </div>`;
       container.appendChild(div);
       updateStatusJamCheckbox();
       validasiDanHitung();
@@ -221,88 +181,44 @@
         const currentCourt = group.querySelector('.select-court').value;
         const jamContainer = group.querySelector('.container-jam-checkboxes');
         const terpakaiList = jadwalTerpakaiMap[currentCourt] || [];
-
         let checkboxesHTML = '';
-        daftarJam.isAlreadyChecked = true;
-
         daftarJam.forEach(j => {
           const isBooked = terpakaiList.includes(j);
           checkboxesHTML += `
-            <label class="flex items-center space-x-1 px-2 py-1 rounded border text-[11px] ${isBooked ? 'bg-rose-50 border-rose-200 text-rose-400 cursor-not-allowed' : 'bg-white border-slate-200 hover:bg-slate-100 cursor-pointer'}">
+            <label class="flex items-center space-x-1 px-2 py-1 rounded border text-[11px] ${isBooked ? 'bg-rose-50 border-rose-200 text-rose-400 cursor-not-allowed' : 'bg-white border-slate-200 cursor-pointer'}">
               <input type="checkbox" value="${j}" onchange="hitungTotal()" class="rounded jam-checkbox" ${isBooked ? 'disabled' : ''}> 
               <span class="font-semibold">${j}</span>
-              ${isBooked ? '<span class="text-[9px] font-bold text-rose-600 block">(Terisi)</span>' : ''}
-            </label>
-          `;
+            </label>`;
         });
         jamContainer.innerHTML = checkboxesHTML;
       });
     }
 
     function hapusBarisCourt(rowId) {
-      const groups = document.querySelectorAll('.row-court-group');
-      if (groups.length <= 1) {
-        return alert("Minimal harus ada 1 Court yang dipilih!");
-      }
+      if (document.querySelectorAll('.row-court-group').length <= 1) return alert("Minimal 1 Court!");
       document.getElementById(`group-${rowId}`).remove();
       validasiDanHitung();
     }
 
     function validasiDanHitung() {
-      const courtSelects = document.querySelectorAll('.select-court');
-      let seenCourts = new Set();
-      let hasDuplicate = false;
-
-      courtSelects.forEach(sel => {
-        if (seenCourts.has(sel.value)) {
-          hasDuplicate = true;
-          sel.classList.add('border-rose-500', 'bg-rose-50');
-        } else {
-          seenCourts.add(sel.value);
-          sel.classList.remove('border-rose-500', 'bg-rose-50');
-        }
-      });
-
-      if (hasDuplicate) {
-        document.getElementById('info-rincian').innerText = "⚠️ Peringatan: Ada Court yang dipilih lebih dari 1 kali!";
-        document.getElementById('info-total-bayar').innerText = "Rp 0";
-        document.getElementById('info-poin-didapat').innerText = "+0 Poin";
-        return false;
-      }
-
-      hitungTotal();
-      return true;
+      hitungTotal(); return true;
     }
 
-    let calculatedTotalBayar = 0;
-    let calculatedPoin = 0;
+    let calculatedTotalBayar = 0; let calculatedPoin = 0;
 
     function hitungTotal() {
       const groups = document.querySelectorAll('.row-court-group');
-      let totalBayar = 0;
-      let totalPoin = 0;
-      let totalJamCount = 0;
-
+      let totalBayar = 0, totalPoin = 0, totalJamCount = 0;
       groups.forEach(group => {
-        const checkedJams = group.querySelectorAll('.jam-checkbox:checked');
-        checkedJams.forEach(checkbox => {
+        group.querySelectorAll('.jam-checkbox:checked').forEach(cb => {
           totalJamCount++;
-          const hour = parseInt(checkbox.value.split(':')[0], 10);
-          
-          if (hour >= 6 && hour <= 18) {
-            totalBayar += 69000;
-            totalPoin += 1;
-          } else {
-            totalBayar += 129000;
-            totalPoin += 2;
-          }
+          const hour = parseInt(cb.value.split(':')[0], 10);
+          if (hour >= 6 && hour <= 18) { totalBayar += 69000; totalPoin += 1; }
+          else { totalBayar += 129000; totalPoin += 2; }
         });
       });
-
-      calculatedTotalBayar = totalBayar;
-      calculatedPoin = totalPoin;
-
-      document.getElementById('info-rincian').innerText = `${totalJamCount} total jam sesi dipilih dari ${groups.length} court`;
+      calculatedTotalBayar = totalBayar; calculatedPoin = totalPoin;
+      document.getElementById('info-rincian').innerText = `${totalJamCount} jam dipilih`;
       document.getElementById('info-total-bayar').innerText = `Rp ${totalBayar.toLocaleString('id-ID')}`;
       document.getElementById('info-poin-didapat').innerText = `+${totalPoin} Poin`;
     }
@@ -314,75 +230,37 @@
 
     async function kirimBooking(e) {
       e.preventDefault();
-      
-      if (!validasiDanHitung()) {
-        return alert("Terdapat pilihan Court yang sama/ganda. Mohon periksa kembali!");
-      }
-
       const groups = document.querySelectorAll('.row-court-group');
       let rincianList = [];
-
       groups.forEach(group => {
         const court = group.querySelector('.select-court').value;
         const checkedJams = Array.from(group.querySelectorAll('.jam-checkbox:checked')).map(cb => cb.value);
-        if (checkedJams.length > 0) {
-          rincianList.push(`${court} [${checkedJams.join(', ')}]`);
-        }
+        if (checkedJams.length > 0) rincianList.push(`${court} [${checkedJams.join(', ')}]`);
       });
-
-      if (rincianList.length === 0) {
-        return alert("Mohon centang minimal 1 jam main pada court yang dipilih!");
-      }
-
+      if (rincianList.length === 0) return alert("Pilih minimal 1 jam main!");
       const fileInput = document.getElementById('b-bukti');
-      if (fileInput.files.length === 0) {
-        return alert("Mohon upload bukti transfer pembayaran!");
-      }
+      if (fileInput.files.length === 0) return alert("Upload bukti transfer!");
 
       const m = JSON.parse(localStorage.getItem('member_padel') || '{}');
-
       const reader = new FileReader();
       reader.onload = async function(event) {
         const payload = {
-          id_booking: generatedIdBooking,
-          id_member: m.id_member || '',
-          nama: m.nama || document.getElementById('b-nama').value,
-          no_hp: m.no_hp || document.getElementById('b-hp').value,
-          lokasi: `Padel Boss Mengger (${rincianList.join(' | ')})`,
-          tanggal: document.getElementById('b-tanggal').value,
-          detail_jam: rincianList.join(' | '),
-          total_bayar: calculatedTotalBayar,
-          poin_didapat: calculatedPoin,
-          bukti_transfer: event.target.result
+          id_booking: generatedIdBooking, id_member: m.id_member || '',
+          nama: m.nama, no_hp: m.no_hp, lokasi: `Padel Boss Mengger (${rincianList.join(' | ')})`,
+          tanggal: document.getElementById('b-tanggal').value, detail_jam: rincianList.join(' | '),
+          total_bayar: calculatedTotalBayar, poin_didapat: calculatedPoin, bukti_transfer: event.target.result
         };
-
-        try {
-          const res = await fetch('/api/booking', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          
-          const result = await res.json();
-          if (!res.ok) throw new Error(result.error || "Gagal mengirim booking");
-
-          try {
-            m.total_poin = (m.total_poin || 0) + calculatedPoin;
-            localStorage.setItem('member_padel', JSON.stringify(m));
-          } catch(e){}
-
-          alert(`✅ Booking ID (${generatedIdBooking}) berhasil disimpan! Total: Rp ${calculatedTotalBayar.toLocaleString('id-ID')} (+${calculatedPoin} Poin). Admin akan segera memverifikasi.`);
+        const res = await fetch('/api/booking', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (res.ok) {
+          alert(`✅ Booking ID (${generatedIdBooking}) berhasil dikirim!`);
           location.reload();
-        } catch (err) {
-          alert("❌ Error: " + err.message);
         }
       };
       reader.readAsDataURL(fileInput.files[0]);
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
-      loadNextBookingId();
-      await fetchJadwalTerpakai();
+      loadNextBookingId(); await fetchJadwalTerpakai();
     });
   </script>
 </body>

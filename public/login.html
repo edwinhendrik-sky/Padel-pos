@@ -65,8 +65,10 @@
 
 <script>
   window.addEventListener('DOMContentLoaded', () => {
-    // Sesi dibiarkan kosong agar form login karyawan selalu tampil normal 
-    // dan tidak langsung melakukan redirect otomatis ke admin.html.
+    // Bersihkan seluruh sesi aktif saat halaman login dimuat
+    localStorage.removeItem('karyawan_aktif');
+    localStorage.removeItem('member_padel');
+    localStorage.removeItem('user_padel');
   });
 
   async function prosesLogin(e) {
@@ -113,3 +115,4 @@
 
 </body>
 </html>
+```[cite: 5]
