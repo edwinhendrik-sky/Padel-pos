@@ -120,6 +120,8 @@ async function initDB() {
         poin_didapat INTEGER DEFAULT 0,
         bukti_transfer TEXT,
         status VARCHAR(20) DEFAULT 'Pending',
+        diverifikasi_oleh VARCHAR(100) DEFAULT '',
+        update_ayo_oleh VARCHAR(100) DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
       INSERT INTO karyawan (id_karyawan, nama, no_hp, tgl_join, role) 
@@ -296,7 +298,7 @@ app.get('/api/riwayat', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// API Booking
+// API Booking & Verifikasi Admin
 app.get('/api/booking', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM booking_lapangan ORDER BY id DESC');
@@ -324,7 +326,9 @@ app.get('/api/booking/terpakai', async (req, res) => {
     if (!tanggal) return res.json([]);
     const result = await pool.query('SELECT lokasi, detail_jam FROM booking_lapangan WHERE tanggal = $1 AND status != \'Ditolak\'', [tanggal]);
     res.json(result.rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/booking', async (req, res) => {
@@ -336,6 +340,34 @@ app.post('/api/booking', async (req, res) => {
     }
     res.json({ message: 'Booking berhasil disimpan!' });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Endpoint update status verifikasi booking oleh admin
+app.post('/api/booking/status', async (req, res) => {
+  const { id_booking, status, admin_nama } = req.body;
+  try {
+    await pool.query(
+      'UPDATE booking_lapangan SET status = $1, diverifikasi_oleh = $2 WHERE id_booking = $3', 
+      [status, admin_nama || 'Administrator', id_booking]
+    );
+    res.json({ message: `Status booking berhasil diperbarui menjadi ${status} oleh ${admin_nama || 'Administrator'}!` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint update status sudah di-update ke AYO oleh admin
+app.post('/api/booking/ayo-status', async (req, res) => {
+  const { id_booking, update_ayo_oleh } = req.body;
+  try {
+    await pool.query(
+      'UPDATE booking_lapangan SET update_ayo_oleh = $1 WHERE id_booking = $2', 
+      [update_ayo_oleh || 'Administrator', id_booking]
+    );
+    res.json({ message: `Status update ke AYO berhasil diverifikasi oleh ${update_ayo_oleh || 'Administrator'}!` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/lokasi', (req, res) => res.json(LOKASI_PADEL));
@@ -351,8 +383,6 @@ app.get('/login-member', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login
 app.get('/login-member.html', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login-member.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login.html')));
 app.get('/login.html', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login.html')));
-
-// Root diarahkan ke login staff/karyawan (atau ubah ke login-member.html jika ingin member sebagai halaman utama)
 app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login.html')));
 
 app.listen(PORT, '0.0.0.0', () => {
