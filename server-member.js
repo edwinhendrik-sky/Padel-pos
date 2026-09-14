@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = process.env.MEMBER_PORT || 10001;
+const PORT = process.env.PORT || process.env.MEMBER_PORT || 10001;
 
 const SUPABASE_URL = "postgresql://postgres.xrhqmjwddcmgyzkudvvg:@Laviola71017@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres";
 const pool = new Pool({
@@ -22,7 +22,7 @@ const PUBLIC_DIR = fs.existsSync(path.join(__dirname, 'public'))
 
 app.use(express.static(PUBLIC_DIR));
 
-// Endpoint Login Member (Wajib Format JSON)[cite: 1]
+// Endpoint API Login Member (Format JSON)
 app.get('/api/member/login/:id', async (req, res) => {
   try {
     const { id } = req.params;
