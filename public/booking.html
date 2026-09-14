@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Booking Lapangan - Padel Management</title>
+  <title>Booking Member Lapangan - Padel Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans text-slate-800 pb-20">
@@ -12,11 +12,11 @@
   <header class="bg-[#1b4d3e] text-white shadow-md sticky top-0 z-40">
     <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
       <div>
-        <span class="text-[10px] font-bold tracking-widest text-amber-400 uppercase block">RESERVASI ONLINE</span>
+        <span class="text-[10px] font-bold tracking-widest text-amber-400 uppercase block">RESERVASI KHUSUS MEMBER</span>
         <h1 class="text-lg font-black tracking-tight" id="header-lokasi-nama">Padel Boss Mengger</h1>
       </div>
       <div id="badge-member-info" class="bg-emerald-900/80 px-3 py-1.5 rounded-xl text-xs font-bold border border-emerald-700/50">
-        Umum / Tamu
+        Memuat Data Member...
       </div>
     </div>
   </header>
@@ -35,7 +35,7 @@
       </div>
       <div class="w-full md:w-1/2 flex items-center justify-end text-right">
         <div class="bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl text-xs text-amber-900 font-semibold w-full">
-          💡 06:00 - 18:00: Rp 69k | 18:00 - 22:00: Rp 99k. Klik jam untuk memilih jadwal.
+          ⭐ Tarif Member: 06:00 - 18:00 (Rp 69k) | 18:00 - 22:00 (Rp 99k)
         </div>
       </div>
     </div>
@@ -62,16 +62,16 @@
 
     <!-- FORM RINGKASAN & KONFIRMASI BOOKING -->
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-      <h3 class="font-black text-sm text-[#1b4d3e] border-b pb-2">Ringkasan Pemesanan</h3>
+      <h3 class="font-black text-sm text-[#1b4d3e] border-b pb-2">Ringkasan Pemesanan Member</h3>
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Nama Pemesan</label>
-          <input type="text" id="b-nama" placeholder="Nama Lengkap" class="w-full p-2.5 border rounded-xl font-medium bg-slate-50">
+          <label class="block font-bold text-slate-700 mb-1">Nama Member</label>
+          <input type="text" id="b-nama" placeholder="Nama Lengkap" class="w-full p-2.5 border rounded-xl font-medium bg-slate-100" readonly>
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">No. WhatsApp / HP</label>
-          <input type="text" id="b-hp" placeholder="Contoh: 628123456789" class="w-full p-2.5 border rounded-xl font-medium bg-slate-50">
+          <input type="text" id="b-hp" placeholder="Contoh: 628123456789" class="w-full p-2.5 border rounded-xl font-medium bg-slate-100" readonly>
         </div>
       </div>
 
@@ -89,18 +89,18 @@
           <span id="ringkasan-jadwal" class="font-bold text-[#1b4d3e]">-</span>
         </div>
         <div class="flex justify-between border-t pt-2 text-sm">
-          <span class="font-bold text-slate-700">Total Pembayaran:</span>
+          <span class="font-bold text-slate-700">Total Pembayaran Member:</span>
           <span id="ringkasan-total" class="font-black text-emerald-700">Rp 0</span>
         </div>
       </div>
 
       <div>
-        <label class="block font-bold text-slate-700 mb-1 text-xs">Upload Bukti Transfer (Opsional / Wajib jika non-member)</label>
+        <label class="block font-bold text-slate-700 mb-1 text-xs">Upload Bukti Transfer (Opsional / Konfirmasi Pembayaran)</label>
         <input type="file" id="b-file" accept="image/*" onchange="konversiFile(this)" class="w-full text-xs border border-slate-300 p-2 rounded-xl bg-slate-50">
       </div>
 
       <button onclick="prosesBooking()" class="w-full bg-[#1b4d3e] hover:bg-[#14382d] text-white py-3.5 rounded-xl font-bold text-xs transition shadow-md">
-        🚀 Konfirmasi & Kirim Booking Sekarang
+        🚀 Kirim Booking Member Sekarang
       </button>
     </div>
 
@@ -123,14 +123,14 @@
 
     const daftarCourt = ["Court 1", "Court 2"];
 
-    // Fungsi penentu harga dinamis sesuai jam
-    function getHargaByJam(jam) {
+    // Penentuan Tarif Member Berdasarkan Jam
+    function getHargaMemberByJam(jam) {
       const jamInt = parseInt(jam.split(':')[0], 10);
-      // Jam 18:00 sampai 22:00 menjadi 99k (99.000)
+      // Jam 18:00 - 22:00 Seharga 99.000 (99k)
       if (jamInt >= 18 && jamInt <= 22) {
         return 99000;
       }
-      // Jam 06:00 sampai 18:00 menjadi 69k (69.000)
+      // Jam 06:00 - 18:00 Seharga 69.000 (69k)
       return 69000;
     }
 
@@ -145,8 +145,10 @@
       tanggalAktif = getTanggalLokal(0);
       document.getElementById('input-tanggal-custom').value = tanggalAktif;
 
+      // Ambil ID Member dari Parameter URL (?member=PB00XX)
       const urlParams = new URLSearchParams(window.location.search);
       const memberId = urlParams.get('member');
+      
       if (memberId) {
         try {
           const res = await fetch(`/api/member/login/${memberId}`);
@@ -155,10 +157,19 @@
             document.getElementById('badge-member-info').innerHTML = `⭐ Member: ${dataMemberLogin.nama} (${dataMemberLogin.id_member})`;
             document.getElementById('b-nama').value = dataMemberLogin.nama;
             document.getElementById('b-hp').value = dataMemberLogin.no_hp;
-            document.getElementById('b-nama').readOnly = true;
-            document.getElementById('b-hp').readOnly = true;
+          } else {
+            alert("⚠️ ID Member pada link tidak valid atau tidak ditemukan. Mohon gunakan link member yang benar.");
+            document.getElementById('badge-member-info').innerHTML = `⚠️ Tamu / Umum`;
+            document.getElementById('b-nama').readOnly = false;
+            document.getElementById('b-hp').readOnly = false;
           }
-        } catch(e) { console.error(e); }
+        } catch(e) {
+          console.error(e);
+        }
+      } else {
+        document.getElementById('badge-member-info').innerHTML = `⚠️ Umum / Tanpa Link Member`;
+        document.getElementById('b-nama').readOnly = false;
+        document.getElementById('b-hp').readOnly = false;
       }
 
       try {
@@ -250,7 +261,7 @@
       let htmlBody = '';
 
       jamOperasional.forEach(jam => {
-        const hargaSlot = getHargaByJam(jam);
+        const hargaSlot = getHargaMemberByJam(jam);
         htmlBody += `<tr class="border-b border-slate-100 hover:bg-slate-50/50">`;
         htmlBody += `<td class="p-3 text-center font-bold text-slate-600 bg-slate-50/80 border-r">${jam}</td>`;
 
@@ -338,7 +349,7 @@
       const noHp = document.getElementById('b-hp').value.trim();
 
       if (!nama || !noHp) {
-        alert("⚠️ Mohon isi Nama Pemesan dan No. WhatsApp terlebih dahulu!");
+        alert("⚠️ Mohon lengkapi data pemesan terlebih dahulu!");
         return;
       }
 
@@ -352,7 +363,7 @@
       const namaLokasiTerpilih = lokasiAktif === 'boss_mengger' ? 'Padel Boss Mengger' : 'Padel Del Luna';
       const detailJamStr = keranjangPilihan.map(k => `${k.court} [${k.jam}]`).join(', ');
       const totalBayar = keranjangPilihan.reduce((acc, curr) => acc + curr.harga, 0);
-      const poinDidapat = keranjangPilihan.length * 2;
+      const poinDidapat = keranjangPilihan.length * 2; // +2 poin member per jam
 
       const payload = {
         id_booking: idBooking,
@@ -376,7 +387,7 @@
         const result = await res.json();
         if (!res.ok) throw new Error(result.error);
 
-        alert(`✅ Booking Berhasil!\n\nID Booking: ${idBooking}\nTotal: Rp ${totalBayar.toLocaleString('id-ID')}\nPoin Diperoleh: +${poinDidapat}\n\nSilakan tunggu verifikasi admin.`);
+        alert(`✅ Booking Member Berhasil!\n\nID Booking: ${idBooking}\nTotal: Rp ${totalBayar.toLocaleString('id-ID')}\nPoin Member Diperoleh: +${poinDidapat}\n\nSilakan menunggu verifikasi admin.`);
         window.location.reload();
       } catch (err) {
         alert("❌ Gagal melakukan booking: " + err.message);
