@@ -382,7 +382,6 @@ app.get('/api/booking/next-id', async (req, res) => {
   } catch (err) { res.json({ id_booking: `BKG-GENERAL-001` }); }
 });
 
-// Endpoint Cek Jadwal Booking Terpakai (Auto Blocking)
 app.get('/api/booking/terpakai', async (req, res) => {
   try {
     const { tanggal } = req.query;
