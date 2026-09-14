@@ -132,7 +132,6 @@ async function initDB() {
       ON CONFLICT (id_karyawan) DO UPDATE SET role = 'admin';
     `);
 
-    // Seeding Member
     const checkMember = await pool.query('SELECT COUNT(*) FROM member_padel');
     if (parseInt(checkMember.rows[0].count) === 0) {
       const initialMembers = [
@@ -192,7 +191,6 @@ async function initDB() {
 }
 initDB();
 
-// API Member & Login
 app.get('/api/member', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM member_padel ORDER BY id_member ASC');
@@ -240,7 +238,6 @@ app.delete('/api/member/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// API Karyawan, Gaji & Absensi
 app.get('/api/karyawan', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM karyawan ORDER BY id_karyawan ASC');
@@ -301,7 +298,6 @@ app.get('/api/riwayat', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// API Booking & Checklist Admin Terpisah
 app.get('/api/booking', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM booking_lapangan ORDER BY id DESC');
@@ -345,10 +341,10 @@ app.post('/api/booking', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Endpoint Checklist Admin per Item (Merekam Nama Admin Masing-masing)
+// Endpoint Checklist Admin dengan Nama Input Manual
 app.post('/api/booking/checklist', async (req, res) => {
   const { id_booking, field, value, admin_nama } = req.body;
-  const namaPetugas = admin_nama || 'Administrator';
+  const namaPetugas = admin_nama ? admin_nama.trim() : 'Administrator';
   try {
     if (field === 'status') {
       const statusVal = value ? 'Disetujui' : 'Pending';
@@ -369,7 +365,6 @@ app.post('/api/booking/checklist', async (req, res) => {
 
 app.get('/api/lokasi', (req, res) => res.json(LOKASI_PADEL));
 
-// Routing Halaman HTML
 app.get('/admin', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 app.get('/index', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
