@@ -126,7 +126,64 @@ async function initDBAdmin() {
       VALUES ('ADMIN', 'Administrator', '081111111111', '2026-01-01', 'admin')
       ON CONFLICT (id_karyawan) DO UPDATE SET role = 'admin';
     `);
-    console.log("✅ Database Admin & Karyawan Siap!");
+
+    // Seeding data member lengkap terbaru
+    const initialMembers = [
+      ['PB0013', 'CLAUDIA VANESSA', '6287823212221', 'AKTIF', '2026-03-06', '2026-09-05'],
+      ['PB0014', 'DEASY LIUNARDO', '6282126255968', 'AKTIF', '2026-04-01', '2026-10-01'],
+      ['PB0011', 'MELLISA GUNAWAN', '6281222888805', 'AKTIF', '2026-04-01', '2026-10-01'],
+      ['PB0016', 'IVO HIKARU WIJAYAKUSUMA', '62818978189', 'AKTIF', '2026-03-08', '2026-09-07'],
+      ['PB0018', 'TOMY SARWANTO', '6281320464423', 'AKTIF', '2026-03-08', '2026-09-07'],
+      ['PB0019', 'DINNY ASHRI AKBARIANI', '6282121070757', 'AKTIF', '2026-04-01', '2026-10-01'],
+      ['PB0020', 'ANTARES PARASEVA BANDORO', '628112343003', 'AKTIF', '2026-03-07', '2026-09-06'],
+      ['PB0022', 'AGNES ISLY', '6281321155313', 'AKTIF', '2026-03-08', '2026-09-07'],
+      ['PB0017', 'ZALE', '6281221892069', 'AKTIF', '2026-03-06', '2026-09-05'],
+      ['PB0024', 'CAROLINE HDI', '6285863336699', 'AKTIF', '2026-04-01', '2026-10-01'],
+      ['PB0015', 'RAMA TYAS', '6288299019106', 'AKTIF', '2026-04-01', '2026-10-01'],
+      ['PB0023', 'LIZA MARIANA', '6281321620426', 'AKTIF', '2026-04-01', '2026-10-01'],
+      ['PB0021', 'AL FRITA MEGA PURI', '6282128286777', 'AKTIF', '2026-03-14', '2026-09-13'],
+      ['PB0025', 'DAVID', '6285721221241', 'AKTIF', '2026-03-14', '2026-09-13'],
+      ['PB0026', 'VICAQUITA LIDRAPRANOTO', '6281809787800', 'AKTIF', '2026-03-14', '2026-09-13'],
+      ['PB0010', 'YAYU SRI DINASTI', '6281288444334', 'AKTIF', '2026-03-07', '2026-09-06'],
+      ['PB0012', 'FREDDY', '62811237738', 'AKTIF', '2026-03-06', '2026-09-05'],
+      ['PB0027', 'ANGGA ARDIANSYAH', '628112309096', 'AKTIF', '2026-04-01', '2026-10-01'],
+      ['PB0028', 'GRACE SYNTIA DEWI', '6281809977336', 'AKTIF', '2026-03-11', '2026-09-10'],
+      ['PB0029', 'ANGGA DWI KOSWARA', '6287779994563', 'AKTIF', '2026-03-13', '2026-09-12'],
+      ['PB0030', 'FAISHAL ARDHAN', '6287838285096', 'AKTIF', '2026-03-25', '2026-09-24'],
+      ['PB0031', 'FRANCISKA CLAUDIA SUNGADI', '6281802038451', 'AKTIF', '2026-03-17', '2026-09-16'],
+      ['PB0032', 'FELIA FEBY SUTANTO', '628112388662', 'AKTIF', '2026-04-03', '2026-10-02'],
+      ['PB0033', 'ALFI RAHMAN WIDI KRISNADI', '6282116163883', 'AKTIF', '2026-04-11', '2026-10-10'],
+      ['PB0034', 'ABDUL HAKIM', '628112244619', 'AKTIF', '2026-04-08', '2026-10-07'],
+      ['PB0035', 'BRAM F PURWA', '6281918189888', 'AKTIF', '2026-04-20', '2026-10-19'],
+      ['PB0036', 'IIN RIZKI', '62818203337', 'AKTIF', '2026-04-20', '2026-10-19'],
+      ['PB0038', 'ANGGI SUCI AGUSTINA', '628562312971', 'AKTIF', '2026-04-19', '2026-10-18'],
+      ['PB0037', 'NAJMIYA BRILIANI ARFIDHIYA', '6282240440173', 'AKTIF', '2026-04-20', '2026-10-19'],
+      ['PB0039', 'KANG J. RIDWAN', '6285871582080', 'AKTIF', '2026-04-20', '2026-10-19'],
+      ['PB0040', 'FABIAN', '6281809090303', 'AKTIF', '2026-04-20', '2026-10-19'],
+      ['PB0041', 'CHRISTINE GAUTAMA', '6281319000930', 'AKTIF', '2026-04-29', '2026-10-28'],
+      ['PB0042', 'JUANITA', '628122182900', 'AKTIF', '2026-05-06', '2026-11-05'],
+      ['PB0043', 'HENRY', '6285956225050', 'AKTIF', '2026-06-01', '2026-12-01'],
+      ['PB0044', 'SEMBIRING', '6281322406496', 'AKTIF', '2026-05-28', '2026-12-01'],
+      ['PB0045', 'FADHIL ADRIAN', '6282117811569', 'AKTIF', '2026-05-29', '2026-11-28'],
+      ['PB0047', 'ALYA DIAZ', '6287745876585', 'AKTIF', '2026-06-18', '2026-12-17'],
+      ['PB0048', 'MUHAMMAD DZULQARNAIN', '628129291077', 'AKTIF', '2026-06-27', '2026-12-26'],
+      ['PB0049', 'ANDIKO MANIK', '62817224615', 'AKTIF', '2026-07-09', '2027-01-08'],
+      ['PB0050', 'SENTOSO', '62818613311', 'AKTIF', '2026-07-24', '2027-01-23']
+    ];
+
+    for (let m of initialMembers) {
+      await pool.query(`
+        INSERT INTO member_padel (id_member, nama, no_hp, status_membership, start_member, stop_member, total_poin)
+        VALUES ($1, $2, $3, $4, $5, $6, 0)
+        ON CONFLICT (id_member) DO UPDATE SET 
+          nama = EXCLUDED.nama,
+          no_hp = EXCLUDED.no_hp,
+          start_member = EXCLUDED.start_member,
+          stop_member = EXCLUDED.stop_member;
+      `, m);
+    }
+
+    console.log("✅ Database Admin & Karyawan beserta Seeding Member Lengkap Siap!");
   } catch (err) {
     console.error("⚠️ Error DB Admin:", err.message);
   }
@@ -143,13 +200,13 @@ app.get('/api/member', async (req, res) => {
 app.get('/api/member/next-id', async (req, res) => {
   try {
     const result = await pool.query(`SELECT id_member FROM member_padel WHERE id_member LIKE 'PB%' ORDER BY id_member DESC LIMIT 1`);
-    let nextNum = 46;
+    let nextNum = 51;
     if (result.rows.length > 0) {
       const num = parseInt(result.rows[0].id_member.replace('PB', ''), 10);
       if (!isNaN(num)) nextNum = num + 1;
     }
     res.json({ nextId: `PB${String(nextNum).padStart(4, '0')}` });
-  } catch (err) { res.json({ nextId: 'PB0046' }); }
+  } catch (err) { res.json({ nextId: 'PB0051' }); }
 });
 
 app.post('/api/member', async (req, res) => {
