@@ -127,11 +127,25 @@ async function initDB() {
         diverifikasi_oleh VARCHAR(100) DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
+    // Pastikan semua kolom checklist ada meskipun tabel sudah pernah dibuat sebelumnya
+    await pool.query(`
+      ALTER TABLE booking_lapangan ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'Pending';
+      ALTER TABLE booking_lapangan ADD COLUMN IF NOT EXISTS pembayaran_dicek BOOLEAN DEFAULT FALSE;
+      ALTER TABLE booking_lapangan ADD COLUMN IF NOT EXISTS pembayaran_dicek_oleh VARCHAR(100) DEFAULT '';
+      ALTER TABLE booking_lapangan ADD COLUMN IF NOT EXISTS ayo_diinput BOOLEAN DEFAULT FALSE;
+      ALTER TABLE booking_lapangan ADD COLUMN IF NOT EXISTS ayo_diinput_oleh VARCHAR(100) DEFAULT '';
+      ALTER TABLE booking_lapangan ADD COLUMN IF NOT EXISTS diverifikasi_oleh VARCHAR(100) DEFAULT '';
+    `);
+
+    await pool.query(`
       INSERT INTO karyawan (id_karyawan, nama, no_hp, tgl_join, role) 
       VALUES ('ADMIN', 'Administrator', '081111111111', '2026-01-01', 'admin')
       ON CONFLICT (id_karyawan) DO UPDATE SET role = 'admin';
     `);
 
+    // Seeding Member awal jika tabel kosong
     const checkMember = await pool.query('SELECT COUNT(*) FROM member_padel');
     if (parseInt(checkMember.rows[0].count) === 0) {
       const initialMembers = [
@@ -191,6 +205,7 @@ async function initDB() {
 }
 initDB();
 
+// API Member & Login
 app.get('/api/member', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM member_padel ORDER BY id_member ASC');
@@ -238,6 +253,7 @@ app.delete('/api/member/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// API Karyawan, Gaji & Absensi
 app.get('/api/karyawan', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM karyawan ORDER BY id_karyawan ASC');
@@ -298,6 +314,7 @@ app.get('/api/riwayat', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// API Booking & Checklist Admin dengan Nama Input Manual
 app.get('/api/booking', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM booking_lapangan ORDER BY id DESC');
@@ -341,7 +358,6 @@ app.post('/api/booking', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Endpoint Checklist Admin dengan Nama Input Manual
 app.post('/api/booking/checklist', async (req, res) => {
   const { id_booking, field, value, admin_nama } = req.body;
   const namaPetugas = admin_nama ? admin_nama.trim() : 'Administrator';
@@ -365,6 +381,7 @@ app.post('/api/booking/checklist', async (req, res) => {
 
 app.get('/api/lokasi', (req, res) => res.json(LOKASI_PADEL));
 
+// Routing Halaman HTML
 app.get('/admin', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 app.get('/index', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
