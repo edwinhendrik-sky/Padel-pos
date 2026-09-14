@@ -120,8 +120,11 @@ async function initDB() {
         poin_didapat INTEGER DEFAULT 0,
         bukti_transfer TEXT,
         status VARCHAR(20) DEFAULT 'Pending',
+        pembayaran_dicek BOOLEAN DEFAULT FALSE,
+        pembayaran_dicek_oleh VARCHAR(100) DEFAULT '',
+        ayo_diinput BOOLEAN DEFAULT FALSE,
+        ayo_diinput_oleh VARCHAR(100) DEFAULT '',
         diverifikasi_oleh VARCHAR(100) DEFAULT '',
-        update_ayo_oleh VARCHAR(100) DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
       INSERT INTO karyawan (id_karyawan, nama, no_hp, tgl_join, role) 
@@ -298,7 +301,7 @@ app.get('/api/riwayat', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// API Booking & Verifikasi Admin
+// API Booking & Verifikasi Checklist Admin
 app.get('/api/booking', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM booking_lapangan ORDER BY id DESC');
@@ -342,29 +345,18 @@ app.post('/api/booking', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Endpoint update status verifikasi booking oleh admin
-app.post('/api/booking/status', async (req, res) => {
-  const { id_booking, status, admin_nama } = req.body;
+// Endpoint Checklist Admin (Status Booking, Pembayaran, AYO)
+app.post('/api/booking/checklist', async (req, res) => {
+  const { id_booking, field, value, admin_nama } = req.body;
   try {
-    await pool.query(
-      'UPDATE booking_lapangan SET status = $1, diverifikasi_oleh = $2 WHERE id_booking = $3', 
-      [status, admin_nama || 'Administrator', id_booking]
-    );
-    res.json({ message: `Status booking berhasil diperbarui menjadi ${status} oleh ${admin_nama || 'Administrator'}!` });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Endpoint update status sudah di-update ke AYO oleh admin
-app.post('/api/booking/ayo-status', async (req, res) => {
-  const { id_booking, update_ayo_oleh } = req.body;
-  try {
-    await pool.query(
-      'UPDATE booking_lapangan SET update_ayo_oleh = $1 WHERE id_booking = $2', 
-      [update_ayo_oleh || 'Administrator', id_booking]
-    );
-    res.json({ message: `Status update ke AYO berhasil diverifikasi oleh ${update_ayo_oleh || 'Administrator'}!` });
+    if (field === 'status') {
+      await pool.query('UPDATE booking_lapangan SET status = $1, diverifikasi_oleh = $2 WHERE id_booking = $3', [value ? 'Disetujui' : 'Pending', admin_nama || 'Administrator', id_booking]);
+    } else if (field === 'pembayaran_dicek') {
+      await pool.query('UPDATE booking_lapangan SET pembayaran_dicek = $1, pembayaran_dicek_oleh = $2 WHERE id_booking = $3', [value, admin_nama || 'Administrator', id_booking]);
+    } else if (field === 'ayo_diinput') {
+      await pool.query('UPDATE booking_lapangan SET ayo_diinput = $1, ayo_diinput_oleh = $2 WHERE id_booking = $3', [value, admin_nama || 'Administrator', id_booking]);
+    }
+    res.json({ message: 'Checklist berhasil diperbarui!' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
