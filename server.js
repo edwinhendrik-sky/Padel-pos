@@ -301,7 +301,7 @@ app.get('/api/riwayat', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// API Booking & Verifikasi Checklist Admin
+// API Booking & Checklist Admin Terpisah
 app.get('/api/booking', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM booking_lapangan ORDER BY id DESC');
@@ -345,16 +345,21 @@ app.post('/api/booking', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Endpoint Checklist Admin (Status Booking, Pembayaran, AYO)
+// Endpoint Checklist Admin per Item (Merekam Nama Admin Masing-masing)
 app.post('/api/booking/checklist', async (req, res) => {
   const { id_booking, field, value, admin_nama } = req.body;
+  const namaPetugas = admin_nama || 'Administrator';
   try {
     if (field === 'status') {
-      await pool.query('UPDATE booking_lapangan SET status = $1, diverifikasi_oleh = $2 WHERE id_booking = $3', [value ? 'Disetujui' : 'Pending', admin_nama || 'Administrator', id_booking]);
+      const statusVal = value ? 'Disetujui' : 'Pending';
+      const olehVal = value ? namaPetugas : '';
+      await pool.query('UPDATE booking_lapangan SET status = $1, diverifikasi_oleh = $2 WHERE id_booking = $3', [statusVal, olehVal, id_booking]);
     } else if (field === 'pembayaran_dicek') {
-      await pool.query('UPDATE booking_lapangan SET pembayaran_dicek = $1, pembayaran_dicek_oleh = $2 WHERE id_booking = $3', [value, admin_nama || 'Administrator', id_booking]);
+      const olehVal = value ? namaPetugas : '';
+      await pool.query('UPDATE booking_lapangan SET pembayaran_dicek = $1, pembayaran_dicek_oleh = $2 WHERE id_booking = $3', [value, olehVal, id_booking]);
     } else if (field === 'ayo_diinput') {
-      await pool.query('UPDATE booking_lapangan SET ayo_diinput = $1, ayo_diinput_oleh = $2 WHERE id_booking = $3', [value, admin_nama || 'Administrator', id_booking]);
+      const olehVal = value ? namaPetugas : '';
+      await pool.query('UPDATE booking_lapangan SET ayo_diinput = $1, ayo_diinput_oleh = $2 WHERE id_booking = $3', [value, olehVal, id_booking]);
     }
     res.json({ message: 'Checklist berhasil diperbarui!' });
   } catch (err) {
