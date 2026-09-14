@@ -35,7 +35,7 @@
       </div>
       <div class="w-full md:w-1/2 flex items-center justify-end text-right">
         <div class="bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl text-xs text-amber-900 font-semibold w-full">
-          💡 Klik pada kotak jam untuk memilih satu atau beberapa jadwal bermain.
+          💡 06:00 - 18:00: Rp 69k | 18:00 - 22:00: Rp 99k. Klik jam untuk memilih jadwal.
         </div>
       </div>
     </div>
@@ -113,8 +113,7 @@
     let tanggalAktif = "";
     let dataMemberLogin = null;
     let slotTerpakai = [];
-    let keranjangPilihan = []; // Menyimpan objek { court, jam, harga }
-    let baseHargaPerJam = 138000; // Harga default per jam padel
+    let keranjangPilihan = [];
 
     const jamOperasional = [
       "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", 
@@ -123,6 +122,17 @@
     ];
 
     const daftarCourt = ["Court 1", "Court 2"];
+
+    // Fungsi penentu harga dinamis sesuai jam
+    function getHargaByJam(jam) {
+      const jamInt = parseInt(jam.split(':')[0], 10);
+      // Jam 18:00 sampai 22:00 menjadi 99k (99.000)
+      if (jamInt >= 18 && jamInt <= 22) {
+        return 99000;
+      }
+      // Jam 06:00 sampai 18:00 menjadi 69k (69.000)
+      return 69000;
+    }
 
     function getTanggalLokal(offsetHari = 0) {
       const d = new Date();
@@ -135,7 +145,6 @@
       tanggalAktif = getTanggalLokal(0);
       document.getElementById('input-tanggal-custom').value = tanggalAktif;
 
-      // Cek apakah ada parameter member dari URL
       const urlParams = new URLSearchParams(window.location.search);
       const memberId = urlParams.get('member');
       if (memberId) {
@@ -241,11 +250,11 @@
       let htmlBody = '';
 
       jamOperasional.forEach(jam => {
+        const hargaSlot = getHargaByJam(jam);
         htmlBody += `<tr class="border-b border-slate-100 hover:bg-slate-50/50">`;
         htmlBody += `<td class="p-3 text-center font-bold text-slate-600 bg-slate-50/80 border-r">${jam}</td>`;
 
         daftarCourt.forEach(court => {
-          // Cek apakah slot ini sudah dibooking pada lokasi dan tanggal yang sama
           let isBooked = false;
           slotTerpakai.forEach(b => {
             if (b.lokasi === namaLokasiTerpilih && b.detail_jam && b.detail_jam.includes(`${court} [${jam}`)) {
@@ -253,14 +262,13 @@
             }
           });
 
-          // Cek apakah sedang dipilih di keranjang
           const isSelected = keranjangPilihan.some(k => k.court === court && k.jam === jam);
 
           if (isBooked) {
             htmlBody += `
               <td class="p-2 border-l">
                 <div class="bg-slate-200 text-slate-500 rounded-xl p-3 text-center cursor-not-allowed opacity-90">
-                  <p class="font-bold text-xs">Rp ${baseHargaPerJam.toLocaleString('id-ID')}</p>
+                  <p class="font-bold text-xs">Rp ${hargaSlot.toLocaleString('id-ID')}</p>
                   <div class="flex items-center justify-center space-x-1 mt-0.5 text-[10px] font-bold text-slate-600">
                     <span>Booked</span> <span>🔔</span>
                   </div>
@@ -270,8 +278,8 @@
           } else {
             htmlBody += `
               <td class="p-2 border-l">
-                <div onclick="togglePilihSlot('${court}', '${jam}', ${baseHargaPerJam})" class="rounded-xl p-3 text-center cursor-pointer transition border ${isSelected ? 'bg-emerald-700 text-white border-emerald-800 shadow-md font-bold' : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-600 hover:shadow-sm'}">
-                  <p class="font-black text-xs">Rp ${baseHargaPerJam.toLocaleString('id-ID')}</p>
+                <div onclick="togglePilihSlot('${court}', '${jam}', ${hargaSlot})" class="rounded-xl p-3 text-center cursor-pointer transition border ${isSelected ? 'bg-emerald-700 text-white border-emerald-800 shadow-md font-bold' : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-600 hover:shadow-sm'}">
+                  <p class="font-black text-xs">Rp ${hargaSlot.toLocaleString('id-ID')}</p>
                   <p class="text-[10px] mt-0.5 ${isSelected ? 'text-emerald-100 font-semibold' : 'text-slate-400'}">${isSelected ? 'Dipilih ✓' : 'Tersedia'}</p>
                 </div>
               </td>
@@ -340,11 +348,11 @@
       }
 
       const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()).replace(/-/g, '');
-      const idBooking = `BKG-${todayStr}-${Math.floor(100 + Math.random() * 900)}` ;
+      const idBooking = `BKG-${todayStr}-${Math.floor(100 + Math.random() * 900)}`;
       const namaLokasiTerpilih = lokasiAktif === 'boss_mengger' ? 'Padel Boss Mengger' : 'Padel Del Luna';
       const detailJamStr = keranjangPilihan.map(k => `${k.court} [${k.jam}]`).join(', ');
       const totalBayar = keranjangPilihan.reduce((acc, curr) => acc + curr.harga, 0);
-      const poinDidapat = keranjangPilihan.length * 2; // +2 poin per jam
+      const poinDidapat = keranjangPilihan.length * 2;
 
       const payload = {
         id_booking: idBooking,
