@@ -9,41 +9,41 @@
 <body class="bg-slate-100 min-h-screen font-sans text-slate-800 flex flex-col md:flex-row">
 
   <!-- SIDEBAR NAVIGATION (COLLAPSIBLE) -->
-  <aside id="sidebar" class="w-20 md:w-64 bg-[#1b4d3e] text-white flex flex-col justify-between shadow-xl md:min-h-screen sticky top-0 z-50 transition-all duration-300">
+  <aside id="sidebar" class="w-64 md:w-64 bg-[#1b4d3e] text-white flex flex-col justify-between shadow-xl md:min-h-screen sticky top-0 z-50 transition-all duration-300">
     <div class="p-4 md:p-6 space-y-6">
       
       <!-- BRANDING & TOGGLE BUTTON -->
       <div class="flex items-center justify-between border-b border-emerald-800 pb-4">
         <div id="sidebar-brand" class="overflow-hidden transition-all">
           <span class="text-[9px] font-bold tracking-widest text-[#d99e12] uppercase block">ADMIN PORTAL</span>
-          <h1 class="text-sm md:text-base font-black tracking-tight mt-0.5 whitespace-nowrap">Padel Boss & Del Luna</h1>
+          <h1 class="text-sm md:text-base font-black tracking-tight mt-0.5 whitespace-nowrap text-white">Padel Boss & Del Luna</h1>
         </div>
         <button onclick="toggleSidebar()" class="p-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-900 text-emerald-200 transition" title="Toggle Sidebar">
           ☰
         </button>
       </div>
 
-      <!-- MENU LIST (SHORTCUT ICON + TEXT) -->
+      <!-- MENU LIST (SHORTCUT ICON + TEXT YANG JELAS & KONTRAS) -->
       <nav class="space-y-1.5 text-xs font-bold">
-        <button onclick="switchTab('tab-booking')" id="btn-tab-booking" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl bg-emerald-900/80 text-white transition group" title="Data Booking">
+        <button onclick="switchTab('tab-booking')" id="btn-tab-booking" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl bg-emerald-900/90 text-white transition group shadow-sm" title="Data Booking">
           <span class="text-base shrink-0">📅</span>
-          <span class="sidebar-text truncate">Data Booking</span>
+          <span class="sidebar-text truncate text-white font-bold">Data Booking</span>
         </button>
-        <button onclick="switchTab('tab-member')" id="btn-tab-member" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition group" title="Database Member">
+        <button onclick="switchTab('tab-member')" id="btn-tab-member" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-white hover:bg-emerald-900/50 transition group" title="Database Member">
           <span class="text-base shrink-0">👥</span>
-          <span class="sidebar-text truncate">Database Member</span>
+          <span class="sidebar-text truncate text-white font-bold">Database Member</span>
         </button>
-        <button onclick="switchTab('tab-absensi')" id="btn-tab-absensi" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition group" title="Rekap Absensi">
+        <button onclick="switchTab('tab-absensi')" id="btn-tab-absensi" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-white hover:bg-emerald-900/50 transition group" title="Rekap Absensi">
           <span class="text-base shrink-0">📍</span>
-          <span class="sidebar-text truncate">Rekap Absensi</span>
+          <span class="sidebar-text truncate text-white font-bold">Rekap Absensi</span>
         </button>
-        <button onclick="switchTab('tab-karyawan')" id="btn-tab-karyawan" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition group" title="Master Karyawan">
+        <button onclick="switchTab('tab-karyawan')" id="btn-tab-karyawan" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-white hover:bg-emerald-900/50 transition group" title="Master Karyawan">
           <span class="text-base shrink-0">💰</span>
-          <span class="sidebar-text truncate">Master Karyawan & Gaji</span>
+          <span class="sidebar-text truncate text-white font-bold">Master Karyawan & Gaji</span>
         </button>
-        <button onclick="switchTab('tab-payroll')" id="btn-tab-payroll" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-emerald-100/70 hover:bg-emerald-950/40 hover:text-white transition group" title="Kalkulator & Slip Gaji">
+        <button onclick="switchTab('tab-payroll')" id="btn-tab-payroll" class="sidebar-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-white hover:bg-emerald-900/50 transition group" title="Kalkulator & Slip Gaji">
           <span class="text-base shrink-0">🧮</span>
-          <span class="sidebar-text truncate">Kalkulator & Slip Gaji</span>
+          <span class="sidebar-text truncate text-white font-bold">Kalkulator & Slip Gaji</span>
         </button>
       </nav>
     </div>
@@ -51,8 +51,8 @@
     <!-- USER SESSION & LOGOUT -->
     <div class="p-4 md:p-6 border-t border-emerald-800 bg-emerald-950/30 flex items-center justify-between">
       <div id="sidebar-user-info" class="overflow-hidden transition-all">
-        <p class="text-[9px] text-emerald-300 uppercase font-semibold">Masuk Sebagai</p>
-        <p id="admin-nama" class="text-xs font-bold text-white truncate">Administrator</p>
+        <p class="text-[9px] text-amber-400 uppercase font-bold tracking-wider">Masuk Sebagai</p>
+        <p id="admin-nama" class="text-xs font-black text-white truncate">Administrator</p>
       </div>
       <button onclick="logoutAdmin()" class="bg-rose-600 hover:bg-rose-700 text-white p-2 rounded-xl text-xs font-bold transition shrink-0" title="Logout">
         🚪
@@ -103,7 +103,7 @@
               <th class="p-3">Status</th>
               <th class="p-3">Masa Berlaku</th>
               <th class="p-3">Poin</th>
-              <th class="p-3 text-center">Aksi</th>
+              <th class="p-3 text-center">Aksi & Link Booking</th>
             </tr>
           </thead>
           <tbody id="tabel-member-body">
@@ -268,7 +268,7 @@
   <!-- SCRIPT -->
   <script>
     let listMasterGaji = [];
-    let isSidebarExpanded = false;
+    let isSidebarExpanded = true; // Default terbuka agar teks menu langsung terlihat jelas
 
     function toggleSidebar() {
       isSidebarExpanded = !isSidebarExpanded;
@@ -295,18 +295,30 @@
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.sidebar-btn').forEach(el => {
-        el.classList.remove('bg-emerald-900/80', 'text-white');
-        el.classList.add('text-emerald-100/70', 'hover:bg-emerald-950/40', 'hover:text-white');
+        el.classList.remove('bg-emerald-900/90', 'text-white', 'shadow-sm');
+        el.classList.add('text-white', 'hover:bg-emerald-900/50');
       });
       document.getElementById(tabId).classList.remove('hidden');
       const btn = document.getElementById('btn-' + tabId);
-      btn.classList.remove('text-emerald-100/70', 'hover:bg-emerald-950/40', 'hover:text-white');
-      btn.classList.add('bg-emerald-900/80', 'text-white');
+      btn.classList.remove('text-white', 'hover:bg-emerald-900/50');
+      btn.classList.add('bg-emerald-900/90', 'text-white', 'shadow-sm');
     }
 
     function logoutAdmin() {
       localStorage.clear();
       window.location.replace('/login.html');
+    }
+
+    // Fungsi untuk menyalin link khusus booking member
+    function salinLinkBooking(idMember) {
+      const baseUrl = window.location.origin;
+      const linkBooking = `${baseUrl}/booking.html?member=${encodeURIComponent(idMember)}`;
+      
+      navigator.clipboard.writeText(linkBooking).then(() => {
+        alert(`✅ Link booking khusus member ${idMember} berhasil disalin!\n\n${linkBooking}`);
+      }).catch(err => {
+        alert("❌ Gagal menyalin link: " + err);
+      });
     }
 
     async function muatDataBooking() {
@@ -357,9 +369,10 @@
               <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">${m.status_membership}</span></td>
               <td class="p-3">${m.start_member || '-'} s/d ${m.stop_member || '-'}</td>
               <td class="p-3 font-bold text-amber-600">${m.total_poin} Poin</td>
-              <td class="p-3 text-center space-x-1">
-                <button onclick="bukaEditMember('${m.id_member}', '${m.nama}', '${m.no_hp}', '${m.status_membership}', '${m.start_member}', '${m.stop_member}', ${m.total_poin})" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-2.5 py-1 rounded font-bold transition">Edit</button>
-                <button onclick="hapusMember('${m.id_member}')" class="bg-rose-100 hover:bg-rose-200 text-rose-800 px-2.5 py-1 rounded font-bold transition">Hapus</button>
+              <td class="p-3 text-center space-x-1 whitespace-nowrap">
+                <button onclick="salinLinkBooking('${m.id_member}')" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-2 py-1 rounded font-bold transition" title="Salin Link Booking Khusus">🔗 Link</button>
+                <button onclick="bukaEditMember('${m.id_member}', '${m.nama}', '${m.no_hp}', '${m.status_membership}', '${m.start_member}', '${m.stop_member}', ${m.total_poin})" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded font-bold transition">Edit</button>
+                <button onclick="hapusMember('${m.id_member}')" class="bg-rose-100 hover:bg-rose-200 text-rose-800 px-2 py-1 rounded font-bold transition">Hapus</button>
               </td>
             </tr>
           `;
@@ -540,13 +553,11 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      // Set default mode sidebar terlipat (hanya shortcut ikon)
-      const brand = document.getElementById('sidebar-brand');
-      const userInfo = document.getElementById('sidebar-user-info');
-      const texts = document.querySelectorAll('.sidebar-text');
-      brand.style.display = 'none';
-      userInfo.style.display = 'none';
-      texts.forEach(t => t.style.display = 'none');
+      // Pastikan sidebar terbuka secara default saat halaman dimuat
+      isSidebarExpanded = true;
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.remove('w-20');
+      sidebar.classList.add('w-64');
 
       muatDataBooking();
       muatDataMember();
