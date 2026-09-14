@@ -82,11 +82,12 @@ app.post('/api/booking', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Routing Halaman Portal Member
 app.get('/login-member', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login-member.html')));
 app.get('/login-member.html', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login-member.html')));
 app.get('/booking', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'booking.html')));
 app.get('/booking.html', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'booking.html')));
-app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login-member.html')));
+app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login-member.html'))); // Mengarahkan root langsung ke login member
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server Khusus Member Booking Aktif di Port ${PORT}`);
