@@ -78,7 +78,7 @@
               <th class="p-3">Total Bayar</th>
               <th class="p-3">Poin</th>
               <th class="p-3 text-center">Bukti Transfer</th>
-              <th class="p-3 text-center">Verifikasi Admin</th>
+              <th class="p-3 text-center">Checklist Verifikasi Admin</th>
             </tr>
           </thead>
           <tbody id="tabel-booking-body">
@@ -341,17 +341,9 @@
           return;
         }
         data.forEach(b => {
-          let statusBadge = '';
-          if (b.status === 'Disetujui' || b.status === 'Valid') {
-            statusBadge = `<span class="px-2 py-1 rounded bg-emerald-100 text-emerald-800 font-bold">Disetujui</span>`;
-          } else if (b.status === 'Ditolak') {
-            statusBadge = `<span class="px-2 py-1 rounded bg-rose-100 text-rose-800 font-bold">Ditolak</span>`;
-          } else {
-            statusBadge = `<span class="px-2 py-1 rounded bg-amber-100 text-amber-800 font-bold">Pending</span>`;
-          }
-
-          let infoVerifikasi = b.diverifikasi_oleh ? `<p class="text-[10px] text-slate-500 mt-0.5 font-semibold">Verifikasi: ${b.diverifikasi_oleh}</p>` : '';
-          let infoAyo = b.update_ayo_oleh ? `<span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold block mt-1">✔ Update AYO (${b.update_ayo_oleh})</span>` : `<button onclick="updateStatusAyo('${b.id_booking}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded font-bold text-[10px] transition mt-1 block w-full">📥 Update ke AYO</button>`;
+          const isDisetujui = b.status === 'Disetujui' || b.status === 'Valid';
+          const isPembayaranDicek = b.pembayaran_dicek === true;
+          const isAyoDiinput = b.ayo_diinput === true;
 
           tbody.innerHTML += `
             <tr class="border-b border-slate-100 hover:bg-slate-50">
@@ -365,14 +357,24 @@
               <td class="p-3 text-center">
                 ${b.bukti_transfer ? `<a href="${b.bukti_transfer}" target="_blank" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-1 rounded-lg font-bold text-[11px] transition">Lihat Foto</a>` : '<span class="text-slate-400">Tidak ada</span>'}
               </td>
-              <td class="p-3 text-center space-y-1">
-                <div class="mb-1">${statusBadge}</div>
-                ${infoVerifikasi}
-                <div class="flex justify-center space-x-1 mt-1">
-                  <button onclick="updateStatusBooking('${b.id_booking}', 'Disetujui')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded font-bold text-[10px] transition">✅ Setujui</button>
-                  <button onclick="updateStatusBooking('${b.id_booking}', 'Ditolak')" class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 rounded font-bold text-[10px] transition">❌ Tolak</button>
-                </div>
-                ${infoAyo}
+              <td class="p-3 space-y-1.5 bg-slate-50/50 rounded-xl border border-slate-100 my-1">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" ${isDisetujui ? 'checked' : ''} onchange="updateChecklist('${b.id_booking}', 'status', this.checked)" class="rounded w-4 h-4 text-emerald-600">
+                  <span class="font-bold text-slate-700">Booking Disetujui</span>
+                </label>
+                ${b.diverifikasi_oleh ? `<p class="text-[9px] text-slate-400 pl-6">Oleh: ${b.diverifikasi_oleh}</p>` : ''}
+
+                <label class="flex items-center space-x-2 cursor-pointer pt-1">
+                  <input type="checkbox" ${isPembayaranDicek ? 'checked' : ''} onchange="updateChecklist('${b.id_booking}', 'pembayaran_dicek', this.checked)" class="rounded w-4 h-4 text-blue-600">
+                  <span class="font-bold text-slate-700">Pembayaran Sudah Dicek</span>
+                </label>
+                ${b.pembayaran_dicek_oleh ? `<p class="text-[9px] text-slate-400 pl-6">Oleh: ${b.pembayaran_dicek_oleh}</p>` : ''}
+
+                <label class="flex items-center space-x-2 cursor-pointer pt-1">
+                  <input type="checkbox" ${isAyoDiinput ? 'checked' : ''} onchange="updateChecklist('${b.id_booking}', 'ayo_diinput', this.checked)" class="rounded w-4 h-4 text-amber-600">
+                  <span class="font-bold text-slate-700">Sudah Diinput ke AYO</span>
+                </label>
+                ${b.ayo_diinput_oleh ? `<p class="text-[9px] text-slate-400 pl-6">Oleh: ${b.ayo_diinput_oleh}</p>` : ''}
               </td>
             </tr>
           `;
@@ -380,41 +382,20 @@
       } catch (err) { console.error("Error load booking:", err); }
     }
 
-    async function updateStatusBooking(idBooking, statusBuku) {
-      if (!confirm(`Ubah status booking ${idBooking} menjadi ${statusBuku}?`)) return;
+    async function updateChecklist(idBooking, field, isChecked) {
       const adminNama = getAdminAktifNama();
-
       try {
-        const res = await fetch('/api/booking/status', {
+        const res = await fetch('/api/booking/checklist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_booking: idBooking, status: statusBuku, admin_nama: adminNama })
+          body: JSON.stringify({ id_booking: idBooking, field: field, value: isChecked, admin_nama: adminNama })
         });
         const result = await res.json();
         if (!res.ok) throw new Error(result.error);
-        alert(`✅ ${result.message}`);
         muatDataBooking();
       } catch (err) {
-        alert("❌ Gagal memperbarui status: " + err.message);
-      }
-    }
-
-    async function updateStatusAyo(idBooking) {
-      if (!confirm(`Tandai booking ${idBooking} sudah di-update ke AYO?`)) return;
-      const adminNama = getAdminAktifNama();
-
-      try {
-        const res = await fetch('/api/booking/ayo-status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_booking: idBooking, update_ayo_oleh: adminNama })
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error);
-        alert(`✅ ${result.message}`);
+        alert("❌ Gagal memperbarui checklist: " + err.message);
         muatDataBooking();
-      } catch (err) {
-        alert("❌ Gagal memperbarui status AYO: " + err.message);
       }
     }
 
